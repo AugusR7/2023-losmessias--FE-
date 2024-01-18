@@ -1,4 +1,6 @@
 export function compare_time(a, b) {
+    console.log(a)
+    console.log(b)
     const startingHour = a.split('-')[0].trim().split(':');
     const endingHour = a.split('-')[1].trim().split(':');
 

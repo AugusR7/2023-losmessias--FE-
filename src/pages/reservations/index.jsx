@@ -85,6 +85,7 @@ export default function Reservation() {
                 requestOptions
             ).then(res => {
                 res.json().then(json => {
+                    console.log(json)
                     setDisabledBlocks(
                         json.map(e => {
                             if (e.day[1] < 10) e.day[1] = '0' + e.day[1];
@@ -93,12 +94,13 @@ export default function Reservation() {
                             if (e.startingHour[1] < 10) e.startingHour[1] = '0' + e.startingHour[1];
                             if (e.endingHour[0] < 10) e.endingHour[0] = '0' + e.endingHour[0];
                             if (e.endingHour[1] < 10) e.endingHour[1] = '0' + e.endingHour[1];
-
+                            console.log(e)
                             return e;
                         })
                     );
                 });
             });
+            console.log(disabledBlocks)
         } else {
             router.push('/');
         }
@@ -112,12 +114,20 @@ export default function Reservation() {
     const handleReserve = () => {
         orderedSelectedBlocks.forEach(block => {
             let date = new Date(curr.setDate(first + dayNumber[block.day] + 7 * week)).toLocaleString().split(',')[0];
+            console.log(date)
             let dateElements = date.split('/');
+            if (dateElements[0].length === 1) dateElements[0] = '0' + dateElements[0];
+            if (dateElements[1].length === 1) dateElements[1] = '0' + dateElements[1];
+            console.log(dateElements)
+            // let bubble = dateElements[0];
+            // dateElements[0] = dateElements[2];
+            // dateElements[2] = dateElements[1];
+            // dateElements[1] = bubble;
             let bubble = dateElements[0];
             dateElements[0] = dateElements[2];
-            dateElements[2] = dateElements[1];
-            dateElements[1] = bubble;
+            dateElements[2] = bubble;
             date = dateElements.join('-');
+            console.log(date)
 
             const reservation = {
                 day: date,
@@ -129,6 +139,7 @@ export default function Reservation() {
                 studentId: parseInt(user.id),
                 price: 250 * block.totalHours,
             };
+            console.log(reservation)
             setIsProcessingReservation(true);
             fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/create`, {
                 method: 'POST',

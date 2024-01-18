@@ -73,9 +73,6 @@ export default function Calendar({ selectedBlocks, setSelectedBlocks, disabledBl
     const router = useRouter();
     const windowSize = useWindowSize();
 
-    let test = new Date().toLocaleString();
-    console.log(test);
-
     const handleBlockSelection = (block, day) => {
         if (!block_disabled(block, day)) {
             if (selectedBlocks.find(element => element.time === block && element.day === day) !== undefined) {
@@ -110,8 +107,9 @@ export default function Calendar({ selectedBlocks, setSelectedBlocks, disabledBl
         blockDate = blockDate.split('/');
         let bubble = blockDate[0];
         blockDate[0] = blockDate[2];
-        blockDate[2] = blockDate[1];
-        blockDate[1] = bubble;
+        blockDate[2] = bubble;
+        if (blockDate[1].length === 1) blockDate[1] = '0' + blockDate[1];
+        if (blockDate[2].length === 1) blockDate[2] = '0' + blockDate[2];
         blockDate = blockDate.join('-');
         const blockDisabled = disabledBlocks.find(
             blk => blockDate === blk.day.join('-') && blk.status === 'CONFIRMED' && compare_time(block, blk)
@@ -170,8 +168,12 @@ export default function Calendar({ selectedBlocks, setSelectedBlocks, disabledBl
             blockDate = blockDate.split('/');
             let bubble = blockDate[0];
             blockDate[0] = blockDate[2];
-            blockDate[2] = blockDate[1];
-            blockDate[1] = bubble;
+            blockDate[2] = bubble;
+            console.log(blockDate)
+            if (blockDate[1].length === 1) blockDate[1] = '0' + blockDate[1];
+            if (blockDate[2].length === 1) blockDate[2] = '0' + blockDate[2];
+            // blockDate[2] = blockDate[1];
+            // blockDate[1] = bubble;
             blockDate = blockDate.join('-');
             const blockDisabled = disabledBlocks.findIndex(
                 blk => blockDate === blk.day.join('-') && blk.status === 'CONFIRMED' && compare_time(block, blk)

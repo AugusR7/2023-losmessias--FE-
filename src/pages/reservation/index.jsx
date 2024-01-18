@@ -4,6 +4,7 @@ import Upload from '@/components/Upload';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/UserContext';
 import {
+    Box,
     Button,
     CircularProgress,
     Dialog,
@@ -20,6 +21,7 @@ import {
 import SendIcon from '@mui/icons-material/Send';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import useWindowSize from '@/hooks/useWindowSize';
+import Homework from '@/components/Homework';
 
 function parse(dateTime) {
     let date = dateTime.slice(0, 3);
@@ -129,13 +131,27 @@ export default function Reservation() {
                 }
             >
                 <HorizontalProfessorCard professor={userInfo} />
-                <Upload
-                    id={router.query.id}
-                    setFiles={setFiles}
-                    setComments={setComments}
-                    setUploadingFileNames={setUploadingFileNames}
-                    setUploadingComments={setUploadingComments}
-                />
+                <Box
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 15,
+                        height: '100%',
+                    }}
+                >
+                    <Upload
+                        id={router.query.id}
+                        setFiles={setFiles}
+                        setComments={setComments}
+                        setUploadingFileNames={setUploadingFileNames}
+                        setUploadingComments={setUploadingComments}
+                    />
+                    {user.role === 'professor' && (
+                        <Homework />
+                    )}
+                </Box>
             </div>
 
             {windowSize.width > 500 && (

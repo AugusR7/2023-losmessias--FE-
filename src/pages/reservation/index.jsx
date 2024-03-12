@@ -6,6 +6,9 @@ import { useUser } from '@/context/UserContext';
 import {
     Box,
     Button,
+    Card,
+    CardActionArea,
+    CardContent,
     CircularProgress,
     Dialog,
     DialogActions,
@@ -14,11 +17,9 @@ import {
     Divider,
     List,
     ListItemButton,
-    ListItemIcon,
     Skeleton,
     Typography,
 } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import useWindowSize from '@/hooks/useWindowSize';
 import Homework from '@/components/Homework';
@@ -32,6 +33,13 @@ function parse(dateTime) {
     return date + ' ' + time;
 }
 
+function formatDate(date) {
+    let dateBig = date.split('T')[0];
+    let time = date.split('T')[1];
+    let dateItems = dateBig.split('-');
+    return dateItems[2] + '/' + dateItems[1] + '/' + dateItems[0] + ' ' + time;
+}
+
 export default function Reservation() {
     const router = useRouter();
     const [userInfo, setUserInfo] = useState({});
@@ -39,12 +47,13 @@ export default function Reservation() {
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [files, setFiles] = useState([]);
+    const [homeworks, setHomeWorks] = useState([]);
+    const [uploadingHomeworks, setUploadingHomeworks] = useState([]);
     const [uploadingFileNames, setUploadingFileNames] = useState([]);
     const [uploadingComments, setUploadingComments] = useState([]);
     const [isLoadingContent, setIsLoadingContent] = useState(true);
     const user = useUser();
     const windowSize = useWindowSize();
-
     useEffect(() => {
         if (user.id) {
             if (user.role === 'admin') router.push('/admin-landing');
@@ -55,32 +64,45 @@ export default function Reservation() {
             };
             fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/file/get-uploaded-data?id=${router.query.id}`, requestOptions)
                 .then(res => {
-                    res.json().then(json => {
-                        let comments = [];
-                        let files = [];
+                    if (res.ok)
+                        res.json().then(json => {
+                            let comments = [];
+                            let files = [];
+                            json.forEach(e => {
+                                if (e.comment !== undefined) comments.push(e);
+                                else files.push(e);
+                            });
 
-                        json.forEach(e => {
-                            if (e.comment !== undefined) comments.push(e);
-                            else files.push(e);
-                        });
-
-                        setFiles(files);
-                        setComments(comments);
-                    });
+                            setFiles(files);
+                            setComments(comments);
+                        })
+                }).then(() => {
+                    fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/homework/getByClassReservation/${router.query.id}`, requestOptions)
+                        .then(res => {
+                            if (res.ok) {
+                                res.json().then(json => {
+                                    setHomeWorks(json);
+                                });
+                            }
+                        })
                 })
                 .finally(() => setIsLoadingContent(false));
 
             if (user.role === 'student') {
-                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/professor/${router.query.userId}`, requestOptions).then(res => {
-                    res.json().then(json => {
+                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/professor/${router.query.userId}`, requestOptions)
+                    .then(res => {
+                        if (res.status === 200)
+                            return res.json()
+                    })
+                    .then(json => {
                         setUserInfo(json);
                     });
-                });
             } else {
                 fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/student/${router.query.userId}`, requestOptions).then(res => {
-                    res.json().then(json => {
-                        setUserInfo(json);
-                    });
+                    if (res.ok)
+                        res.json().then(json => {
+                            setUserInfo(json);
+                        });
                 });
             }
         } else {
@@ -149,102 +171,189 @@ export default function Reservation() {
                         setUploadingComments={setUploadingComments}
                     />
                     {user.role === 'professor' && (
-                        <Homework />
+                        <Homework
+                            id={router.query.id}
+                            setHomeWorks={setHomeWorks}
+                            setUploadingHomeworks={setUploadingHomeworks}
+                        />
                     )}
                 </Box>
             </div>
 
             {windowSize.width > 500 && (
-                <div style={{ display: 'flex', alignItems: 'baseline', margin: '2rem auto', justifyContent: 'space-between' }}>
-                    <div style={{ width: '50%', padding: '1.5rem' }}>
-                        {isLoadingContent ? (
-                            <Skeleton variant='rectangular' height={60} style={{ borderRadius: 10 }} />
-                        ) : (
-                            <List>
-                                {uploadingComments.map((comment, idx) => (
-                                    <div
-                                        key={idx}
-                                        style={{
-                                            flexDirection: 'row',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            backgroundColor: 'rgb(144, 199, 255)',
-                                            height: 50,
-                                            borderRadius: 10,
-                                        }}
-                                    >
-                                        <CircularProgress size={30} sx={{ ml: 2, mr: 2 }} />
-                                        <Typography>Posting </Typography>{' '}
-                                        <Typography sx={{ ml: 1, fontWeight: 'bold', fontStyle: 'italic' }}> {comment}</Typography>
-                                    </div>
-                                ))}
-                                {comments.map((com, idx) => {
-                                    let author = userInfo;
-                                    if (com.role.toLowerCase() === user.role) author = user;
-                                    return (
-                                        <ListItemButton
-                                            onClick={() => handleClick(com.comment)}
-                                            key={idx}
-                                            style={{
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: com.role.toLowerCase() !== user.role ? 'flex-end' : 'flex-start',
-                                            }}
-                                        >
-                                            <Typography>{author.firstName + ' ' + author.lastName + ' - ' + com.comment}</Typography>
-                                            <Typography variant='caption' sx={{ marginLeft: '0.5rem' }}>
-                                                {parse(com.uploadedDateTime)}
-                                            </Typography>
-                                        </ListItemButton>
-                                    );
-                                })}
-                            </List>
-                        )}
+                <>
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', margin: '2rem auto', justifyContent: 'space-between' }}>
+                            <div style={{ width: '50%', padding: '1.5rem' }}>
+                                {isLoadingContent ? (
+                                    <Skeleton variant='rectangular' height={60} style={{ borderRadius: 10 }} />
+                                ) : (
+                                    <List>
+                                        {uploadingComments.map((comment, idx) => (
+                                            <div
+                                                key={idx}
+                                                style={{
+                                                    flexDirection: 'row',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    backgroundColor: 'rgb(144, 199, 255)',
+                                                    height: 50,
+                                                    borderRadius: 10,
+                                                }}
+                                            >
+                                                <CircularProgress size={30} sx={{ ml: 2, mr: 2 }} />
+                                                <Typography>Posting </Typography>{' '}
+                                                <Typography sx={{ ml: 1, fontWeight: 'bold', fontStyle: 'italic' }}> {comment}</Typography>
+                                            </div>
+                                        ))}
+                                        {comments.map((com, idx) => {
+                                            let author = userInfo;
+                                            if (com.role.toLowerCase() === user.role) author = user;
+                                            return (
+                                                <ListItemButton
+                                                    onClick={() => handleClick(com.comment)}
+                                                    key={idx}
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: com.role.toLowerCase() !== user.role ? 'flex-end' : 'flex-start',
+                                                    }}
+                                                >
+                                                    <Typography>{author.firstName + ' ' + author.lastName + ' - ' + com.comment}</Typography>
+                                                    <Typography variant='caption' sx={{ marginLeft: '0.5rem' }}>
+                                                        {parse(com.uploadedDateTime)}
+                                                    </Typography>
+                                                </ListItemButton>
+                                            );
+                                        })}
+                                    </List>
+                                )}
+                            </div>
+
+                            <Divider orientation='vertical' flexItem />
+
+                            <div style={{ width: '50%', padding: '1.5rem' }}>
+                                {isLoadingContent ? (
+                                    <Skeleton variant='rectangular' height={60} style={{ borderRadius: 10 }} />
+                                ) : (
+                                    <>
+                                        {uploadingFileNames.map((fileName, idx) => (
+                                            <div
+                                                key={idx}
+                                                style={{
+                                                    flexDirection: 'row',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    backgroundColor: 'rgb(144, 199, 255)',
+                                                    height: 50,
+                                                    borderRadius: 10,
+                                                }}
+                                            >
+                                                <CircularProgress size={30} sx={{ ml: 2, mr: 2 }} />
+                                                <Typography>Uploading </Typography>{' '}
+                                                <Typography sx={{ ml: 1, fontWeight: 'bold', fontStyle: 'italic' }}> {fileName}</Typography>
+                                                <PictureAsPdfIcon fontSize='large' sx={{ ml: 2, mr: 2, color: 'gray' }} />
+                                            </div>
+                                        ))}
+                                        {files.map((file, idx) => {
+                                            let author = userInfo;
+                                            if (file.role.toLowerCase() === user.role) author = user;
+                                            return (
+                                                <div style={{ display: 'flex', alignItems: 'center' }} key={idx}>
+                                                    <Button onClick={() => handleDownload(file)}>
+                                                        <PictureAsPdfIcon fontSize='large' />
+                                                        <Typography sx={{ marginLeft: '0.5rem' }}>{file.fileName}</Typography>
+                                                    </Button>
+                                                    <Typography>{' - ' + author.firstName + ' ' + author.lastName}</Typography>
+                                                </div>
+                                            );
+                                        })}
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', margin: '2rem auto', justifyContent: 'space-between' }}>
+                            <div>
+                                <Typography variant='h5' sx={{ fontWeight: 'bold' }}>
+                                    Homeworks
+                                </Typography>
+                                <div style={{ width: '100%', padding: '1.5rem' }}>
+                                    {isLoadingContent ? (
+                                        <Skeleton variant='rectangular' height={60} style={{ borderRadius: 10 }} />
+                                    ) : (
+                                        <>
+                                            {uploadingHomeworks.map((idx) => (
+                                                <div
+                                                    key={idx}
+                                                    style={{
+                                                        flexDirection: 'row',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        backgroundColor: 'rgb(144, 199, 255)',
+                                                        height: 50,
+                                                        borderRadius: 10,
+                                                    }}
+                                                >
+                                                    <CircularProgress size={30} sx={{ ml: 2, mr: 2 }} />
+                                                    <Typography>Posting homework...</Typography>
+                                                </div>
+                                            ))}
+                                            {homeworks.map((homework, idx) => {
+                                                const color = homework.status === "PENDING" ? "red" : homework.status === "DONE" ? "green" : "orange"
+
+                                                return (
+                                                    <Card sx={{ display: "flex", width: "100%", marginBottom: '1rem' }} key={idx}>
+                                                        <CardActionArea>
+                                                            <CardContent sx={{ marginLeft: '1rem' }}>
+                                                                <div style={{ display: "flex", flexDirection: "row", alignItems: 'center', marginBottom: '1rem', justifyContent: 'center' }}>
+                                                                    <Typography variant='h6' sx={{ color: color, fontWeight: 'bold' }}>{homework.status}</Typography>
+                                                                    {homework.status === "PENDING" &&
+                                                                        <Typography sx={{ color: "red", marginLeft: "0.5rem" }}>
+                                                                            due {formatDate(homework.deadline)}
+                                                                        </Typography>
+                                                                    }
+                                                                </div>
+                                                                <div style={{ display: "flex", flexDirection: "row", alignItems: 'center', marginBottom: '1rem' }}>
+                                                                    <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Assignment:</Typography>
+
+                                                                    {homework.assignment.length > 0 ?
+                                                                        <div>
+                                                                            <Typography sx={{ marginLeft: '0.5rem' }}>{homework.assignment}</Typography>
+                                                                        </div>
+                                                                        :
+                                                                        <Typography sx={{ marginLeft: '0.5rem', fontStyle: 'italic' }}>Homework assignment determined by file</Typography>
+                                                                    }
+                                                                </div>
+                                                                <div style={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
+                                                                    <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Files:</Typography>
+                                                                    {homework.files.length > 0 && homework.files.map((file, idx) => {
+                                                                        const author = file.role.toLowerCase() === user.role ? user : userInfo;
+                                                                        return (
+                                                                            <div style={{ display: 'flex', alignItems: 'center' }} key={idx}>
+                                                                                {console.log(homework.files)}
+                                                                                <Button onClick={() => handleDownload(file)}>
+                                                                                    <PictureAsPdfIcon fontSize='large' />
+                                                                                    <Typography sx={{ marginLeft: '0.5rem' }}>{file?.fileName}</Typography>
+                                                                                </Button>
+                                                                                <Typography>{' - ' + author.firstName + ' ' + author.lastName}</Typography>
+                                                                            </div>
+                                                                        )
+                                                                    })}
+                                                                </div>
+                                                            </CardContent>
+                                                        </CardActionArea>
+                                                    </Card>
+                                                );
+                                            })}
+                                        </>
+                                        // <List>
+                                        // </List>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
-                    <Divider orientation='vertical' flexItem />
-
-                    <div style={{ width: '50%', padding: '1.5rem' }}>
-                        {isLoadingContent ? (
-                            <Skeleton variant='rectangular' height={60} style={{ borderRadius: 10 }} />
-                        ) : (
-                            <>
-                                {uploadingFileNames.map((fileName, idx) => (
-                                    <div
-                                        key={idx}
-                                        style={{
-                                            flexDirection: 'row',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            backgroundColor: 'rgb(144, 199, 255)',
-                                            height: 50,
-                                            borderRadius: 10,
-                                        }}
-                                    >
-                                        <CircularProgress size={30} sx={{ ml: 2, mr: 2 }} />
-                                        <Typography>Uploading </Typography>{' '}
-                                        <Typography sx={{ ml: 1, fontWeight: 'bold', fontStyle: 'italic' }}> {fileName}</Typography>
-                                        <PictureAsPdfIcon fontSize='large' sx={{ ml: 2, mr: 2, color: 'gray' }} />
-                                    </div>
-                                ))}
-                                {files.map((file, idx) => {
-                                    let author = userInfo;
-                                    if (file.role.toLowerCase() === user.role) author = user;
-
-                                    return (
-                                        <div style={{ display: 'flex', alignItems: 'center' }} key={idx}>
-                                            <Button onClick={() => handleDownload(file)}>
-                                                <PictureAsPdfIcon fontSize='large' />
-                                                <Typography sx={{ marginLeft: '0.5rem' }}>{file.fileName}</Typography>
-                                            </Button>
-                                            <Typography>{' - ' + author.firstName + ' ' + author.lastName}</Typography>
-                                        </div>
-                                    );
-                                })}
-                            </>
-                        )}
-                    </div>
-                </div>
+                </>
             )}
 
             {windowSize.width <= 500 && (

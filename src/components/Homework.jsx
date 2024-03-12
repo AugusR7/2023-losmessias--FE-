@@ -1,8 +1,10 @@
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Snackbar, TextField, Typography, styled } from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useState } from "react";
+import { useUser } from "@/context/UserContext";
 
-export default function Homework({ }) {
+export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
+    const user = useUser();
     const [open, setOpen] = useState(false); // true or false
     const [alert, setAlert] = useState(false); // true or false
     const [alertSeverity, setAlertSeverity] = useState(''); // ['success', 'info', 'warning', 'error']
@@ -10,6 +12,7 @@ export default function Homework({ }) {
     const [newMessage, setNewMessage] = useState(''); // string
     const [alertMessage, setAlertMessage] = useState(''); // string
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); // YYYY-MM-DD
+    const [time, setTime] = useState(new Date().toISOString().slice(11, 16)); // HH:MM
     const handleClose = () => setOpen(false);
 
     const handleDateChange = (event) => {
@@ -21,6 +24,77 @@ export default function Homework({ }) {
             setAlert(false)
             setDate(event.target.value);
         }
+    };
+
+    const handleFileChange = e => {
+        if (e.target.files) {
+            setFile(e.target.files[0]);
+        }
+    };
+
+    const dateFormatter = (date, time) => {
+        return `${date}T${time}:00`
+    }
+
+    const handleSave = () => {
+        if (file !== null || newMessage !== '') {
+            var data = new FormData();
+            data.append('file', file);
+            data.append('classReservationId', id);
+            data.append('professorId', user.id);
+            data.append('deadline', dateFormatter(date, time));
+            data.append('assignment', newMessage);
+            setUploadingHomeworks(prevHomeworks => [...prevHomeworks, {
+                assignment: newMessage,
+                deadline: dateFormatter(date, time),
+                professorId: user.id,
+                classReservationId: parseInt(id),
+                files: file ? [file] : []
+            }]);
+
+            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/homework/create`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${user.token}`,
+                },
+                body: data,
+            })
+                .then(res => {
+                    if (res.status === 201) {
+                        setAlertMessage('Homework uploaded successfully!');
+                        setAlertSeverity('success');
+                        res.json().then(data => {
+                            console.log(data)
+                            setHomeWorks(prevHomeworks => {
+                                console.log(prevHomeworks)
+                                return [...prevHomeworks, {
+                                    assignment: newMessage,
+                                    deadline: dateFormatter(date, time),
+                                    professorId: user.id,
+                                    classReservationId: parseInt(id),
+                                    files: file ? data.files : [],
+                                    status: 'PENDING',
+                                }]
+                            });
+                        });
+
+                    } else {
+                        setAlertSeverity('error');
+                        setAlertMessage('There was an error uploading the homework!');
+                    }
+                }).finally(() => setUploadingHomeworks(prevHomeworks => prevHomeworks.filter(homework => homework.assignment !== newMessage)))
+                .catch(err => {
+                    console.log(err)
+                    setAlertSeverity('error');
+                    setAlertMessage('There was an error uploading the homework!');
+                })
+
+            // .finally(() => setUploadingFileNames(prevNames => prevNames.filter(name => name !== file.name)));
+        }
+        setOpen(false);
+        setAlert(true);
+        setNewMessage('');
+        setFile(null);
     };
 
     const VisuallyHiddenInput = styled('input')({
@@ -80,7 +154,7 @@ export default function Homework({ }) {
                                 <VisuallyHiddenInput
                                     type='file'
                                     name='file'
-                                //   onChange={handleFileChange} 
+                                    onChange={handleFileChange}
                                 />
                             </Button>
                             <Typography>{file?.name}</Typography>
@@ -101,6 +175,18 @@ export default function Homework({ }) {
                                 shrink: true,
                             }}
                         />
+                        <TextField
+                            id="time"
+                            label="Due Time"
+                            type="time"
+                            defaultValue={time}
+                            value={time}
+                            onChange={event => setTime(event.target.value)}
+                            sx={{ width: 120, marginLeft: 2 }}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
                     </div>
                 </DialogContent>
                 <DialogActions>
@@ -113,14 +199,11 @@ export default function Homework({ }) {
                         }}
                     >
 
-                        <Button
-                            onClick={handleClose}
-                        >
-                            Cancel
-                        </Button>
+                        <Button onClick={handleClose} >Cancel</Button>
                         <Button
                             variant='contained'
-                            onClick={handleClose}
+                            onClick={handleSave}
+                        // onClick={handleClose}
                         >
                             Save
                         </Button>

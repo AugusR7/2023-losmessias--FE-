@@ -36,6 +36,9 @@ export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
         return `${date}T${time}:00`
     }
 
+    const handleResponse = () => {
+
+    }
     const handleSave = () => {
         if (file !== null || newMessage !== '') {
             var data = new FormData();
@@ -49,7 +52,10 @@ export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
                 deadline: dateFormatter(date, time),
                 professorId: user.id,
                 classReservationId: parseInt(id),
-                files: file ? [file] : []
+                assignmentFile: file,
+                status: 'PENDING',
+                responseFile: null,
+                response: null
             }]);
 
             fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/homework/create`, {
@@ -72,8 +78,10 @@ export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
                                     deadline: dateFormatter(date, time),
                                     professorId: user.id,
                                     classReservationId: parseInt(id),
-                                    files: file ? data.files : [],
                                     status: 'PENDING',
+                                    responseFile: null,
+                                    response: null,
+                                    assignmentFile: data.file
                                 }]
                             });
                         });

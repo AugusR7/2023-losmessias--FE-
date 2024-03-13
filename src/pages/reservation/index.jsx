@@ -277,7 +277,7 @@ export default function Reservation() {
                                 <Typography variant='h5' sx={{ fontWeight: 'bold' }}>
                                     Homeworks
                                 </Typography>
-                                <div style={{ width: '100%', padding: '1.5rem' }}>
+                                <div style={{ width: '100%', padding: '1.5rem', flexDirection: "column", display: 'flex' }}>
                                     {isLoadingContent ? (
                                         <Skeleton variant='rectangular' height={60} style={{ borderRadius: 10 }} />
                                     ) : (
@@ -300,9 +300,9 @@ export default function Reservation() {
                                             ))}
                                             {homeworks.map((homework, idx) => {
                                                 const color = homework.status === "PENDING" ? "red" : homework.status === "DONE" ? "green" : "orange"
-
+                                                
                                                 return (
-                                                    <Card sx={{ display: "flex", width: "100%", marginBottom: '1rem' }} key={idx}>
+                                                    <Card sx={{ display: "flex", width: "100%", marginBottom: '1rem', marginRight: '1rem' }} key={idx}>
                                                         <CardActionArea>
                                                             <CardContent sx={{ marginLeft: '1rem' }}>
                                                                 <div style={{ display: "flex", flexDirection: "row", alignItems: 'center', marginBottom: '1rem', justifyContent: 'center' }}>
@@ -326,20 +326,38 @@ export default function Reservation() {
                                                                 </div>
                                                                 <div style={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
                                                                     <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Files:</Typography>
-                                                                    {homework.files.length > 0 && homework.files.map((file, idx) => {
-                                                                        const author = file.role.toLowerCase() === user.role ? user : userInfo;
-                                                                        return (
-                                                                            <div style={{ display: 'flex', alignItems: 'center' }} key={idx}>
-                                                                                {console.log(homework.files)}
-                                                                                <Button onClick={() => handleDownload(file)}>
-                                                                                    <PictureAsPdfIcon fontSize='large' />
-                                                                                    <Typography sx={{ marginLeft: '0.5rem' }}>{file?.fileName}</Typography>
-                                                                                </Button>
-                                                                                <Typography>{' - ' + author.firstName + ' ' + author.lastName}</Typography>
-                                                                            </div>
-                                                                        )
-                                                                    })}
+                                                                    {homework.assignmentFile &&
+                                                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                                            <Button onClick={() => handleDownload(homework.assignmentFile)}>
+                                                                                <PictureAsPdfIcon fontSize='large' />
+                                                                                <Typography sx={{ marginLeft: '0.5rem' }}>{homework.assignmentFile.fileName}</Typography>
+                                                                            </Button>
+                                                                            <Typography>{' - ' + (homework.assignmentFile.role.toLowerCase() === user.role ? user.firstName + ' ' + user.lastName : userInfo.firstName + ' ' + userInfo.lastName)}</Typography>
+                                                                        </div>
+                                                                    }
                                                                 </div>
+                                                                {homework.status === "DONE" &&
+                                                                    <>
+                                                                        <Divider sx={{ marginTop: '1rem', marginBottom: '1rem' }} />
+                                                                        {console.log(homework.assignmentFile)}
+                                                                        {console.log(homework.responseFile)}
+                                                                        <div style={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
+                                                                            <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Response:</Typography>
+                                                                            {homework.response.length > 0 &&
+                                                                                <Typography sx={{ marginLeft: '0.5rem' }}>{homework.response}</Typography>
+                                                                            }
+                                                                            {homework.responseFile &&
+                                                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                                                    <Button onClick={() => handleDownload(homework.responseFile)}>
+                                                                                        <PictureAsPdfIcon fontSize='large' />
+                                                                                        <Typography sx={{ marginLeft: '0.5rem' }}>{homework.responseFile.fileName}</Typography>
+                                                                                    </Button>
+                                                                                    <Typography>{' - ' + (homework.responseFile.role.toLowerCase() === user.role ? user.firstName + ' ' + user.lastName : userInfo.firstName + ' ' + userInfo.lastName)}</Typography>
+                                                                                </div>
+                                                                            }
+                                                                        </div>
+                                                                    </>
+                                                                }
                                                             </CardContent>
                                                         </CardActionArea>
                                                     </Card>

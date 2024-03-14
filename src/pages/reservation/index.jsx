@@ -4,6 +4,7 @@ import Upload from '@/components/Upload';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/UserContext';
 import {
+    Alert,
     Box,
     Button,
     Card,
@@ -18,11 +19,13 @@ import {
     List,
     ListItemButton,
     Skeleton,
+    Snackbar,
     Typography,
 } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import useWindowSize from '@/hooks/useWindowSize';
-import Homework from '@/components/Homework';
+import HomeworkButton from '@/components/HomeworkButton';
+import { HomeworkDialog } from '@/components/modals/HomeworkDialog';
 
 function parse(dateTime) {
     let date = dateTime.slice(0, 3);
@@ -54,6 +57,108 @@ export default function Reservation() {
     const [isLoadingContent, setIsLoadingContent] = useState(true);
     const user = useUser();
     const windowSize = useWindowSize();
+
+    const [openHomeworkDialog, setOpenHomeworkDialog] = useState(false);
+    const [alert, setAlert] = useState(false);
+    const [alertSeverity, setAlertSeverity] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
+    const [file, setFile] = useState(null);
+    const [newMessage, setNewMessage] = useState('');
+    const [homeworkToRespond, setHomeworkToRespond] = useState({});
+    const handleCloseHomeworkDialog = () => setOpenHomeworkDialog(false);
+
+    const handleHomeworkResponse = (homework) => {
+        if (homework.status !== "PENDING") return;
+        setHomeworkToRespond(homework);
+        setOpenHomeworkDialog(true);
+    }
+
+    const handleFileChange = e => {
+        if (e.target.files) {
+            setFile(e.target.files[0]);
+        }
+    };
+
+
+    const handleSave = () => {
+        if (file !== null || newMessage !== '') {
+            var data = new FormData();
+            data.append('file', file);
+            data.append('response', newMessage);
+            data.append('associatedId', user.id);
+
+            setHomeWorks(prevHomeworks => prevHomeworks.filter(homework => homework.id !== homeworkToRespond.id));
+            setUploadingHomeworks(prevHomeworks => [
+                ...prevHomeworks,
+                {
+                    assignment: homeworkToRespond.assignment,
+                    deadline: homeworkToRespond.deadline,
+                    professorId: homeworkToRespond.professorId,
+                    classReservationId: homeworkToRespond.classReservationId,
+                    assignmentFile: homeworkToRespond.assignmentFile,
+                    status: 'DONE',
+                    responseFile: file,
+                    response: newMessage,
+                },
+            ]);
+
+            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/homework/respond/` + homeworkToRespond.id, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${user.token}`,
+                },
+                body: data,
+            })
+                .then(res => {
+                    if (res.ok) {
+                        setAlert(true);
+                        setAlertSeverity('success');
+                        setAlertMessage('Homework answered successfully');
+                        res.json().then(data => {
+                            setHomeWorks(prevHomeworks => {
+                                return [
+                                    ...prevHomeworks,
+                                    {
+                                        id: data.id,
+                                        deadline: data.deadline,
+                                        professorId: data.professorId,
+                                        classReservationId: data.classReservationId,
+                                        status: data.status,
+                                        assignment: data.assignment,
+                                        assignmentFile: data.assignmentFile,
+                                        responseFile: data.responseFile,
+                                        response: data.response,
+                                    },
+                                ];
+                            });
+                        });
+                        setTimeout(() => {
+                            setAlert(false);
+                        }, 3000);
+                    } else {
+                        setAlert(true);
+                        setAlertSeverity('error');
+                        setAlertMessage('Error posting homework');
+                        setTimeout(() => {
+                            setAlert(false);
+                        }, 3000);
+                    }
+                }).finally(() => {
+                    setUploadingHomeworks(prevHomeworks => prevHomeworks.filter(homework =>
+                        (homework.classReservationId !== homeworkToRespond.classReservationId) &&
+                        (homework.professorId !== homeworkToRespond.professorId) &&
+                        (homework.assignment !== homeworkToRespond.assignment) &&
+                        (homework.assignmentFile !== homeworkToRespond.assignmentFile)))
+                    setOpenHomeworkDialog(false);
+                    setFile(null);
+                    setNewMessage('');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    }
+
     useEffect(() => {
         if (user.id) {
             if (user.role === 'admin') router.push('/admin-landing');
@@ -145,6 +250,23 @@ export default function Reservation() {
 
     return (
         <div style={{ width: '90%', margin: '2rem auto' }}>
+            <HomeworkDialog
+                open={openHomeworkDialog}
+                newMessage={newMessage}
+                setNewMessage={setNewMessage}
+                file={file}
+                handleFileChange={handleFileChange}
+                handleClose={handleCloseHomeworkDialog}
+                handleSave={handleSave}
+            />
+            <Snackbar
+                open={alert}
+                autoHideDuration={6000}
+                onClose={() => setAlert(false)}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={handleClose} severity={alertSeverity} sx={{ width: '100%' }}>{alertMessage}</Alert>
+            </Snackbar>
             <div
                 style={
                     windowSize.width > 500
@@ -171,7 +293,7 @@ export default function Reservation() {
                         setUploadingComments={setUploadingComments}
                     />
                     {user.role === 'professor' && (
-                        <Homework
+                        <HomeworkButton
                             id={router.query.id}
                             setHomeWorks={setHomeWorks}
                             setUploadingHomeworks={setUploadingHomeworks}
@@ -300,10 +422,10 @@ export default function Reservation() {
                                             ))}
                                             {homeworks.map((homework, idx) => {
                                                 const color = homework.status === "PENDING" ? "red" : homework.status === "DONE" ? "green" : "orange"
-                                                
+
                                                 return (
-                                                    <Card sx={{ display: "flex", width: "100%", marginBottom: '1rem', marginRight: '1rem' }} key={idx}>
-                                                        <CardActionArea>
+                                                    <Card sx={{ display: "flex", width: "100%", marginBottom: '1rem', marginRight: '1rem' }} key={idx} >
+                                                        <Button onClick={() => handleHomeworkResponse(homework)} >
                                                             <CardContent sx={{ marginLeft: '1rem' }}>
                                                                 <div style={{ display: "flex", flexDirection: "row", alignItems: 'center', marginBottom: '1rem', justifyContent: 'center' }}>
                                                                     <Typography variant='h6' sx={{ color: color, fontWeight: 'bold' }}>{homework.status}</Typography>
@@ -339,8 +461,6 @@ export default function Reservation() {
                                                                 {homework.status === "DONE" &&
                                                                     <>
                                                                         <Divider sx={{ marginTop: '1rem', marginBottom: '1rem' }} />
-                                                                        {console.log(homework.assignmentFile)}
-                                                                        {console.log(homework.responseFile)}
                                                                         <div style={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
                                                                             <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Response:</Typography>
                                                                             {homework.response.length > 0 &&
@@ -359,13 +479,11 @@ export default function Reservation() {
                                                                     </>
                                                                 }
                                                             </CardContent>
-                                                        </CardActionArea>
+                                                        </Button>
                                                     </Card>
                                                 );
                                             })}
                                         </>
-                                        // <List>
-                                        // </List>
                                     )}
                                 </div>
                             </div>

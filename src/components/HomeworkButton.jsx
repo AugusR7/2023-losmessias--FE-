@@ -2,8 +2,9 @@ import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, 
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useState } from "react";
 import { useUser } from "@/context/UserContext";
+import { HomeworkDialog } from "./modals/HomeworkDialog";
 
-export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
+export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks }) {
     const user = useUser();
     const [open, setOpen] = useState(false); // true or false
     const [alert, setAlert] = useState(false); // true or false
@@ -36,9 +37,6 @@ export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
         return `${date}T${time}:00`
     }
 
-    const handleResponse = () => {
-
-    }
     const handleSave = () => {
         if (file !== null || newMessage !== '') {
             var data = new FormData();
@@ -74,6 +72,7 @@ export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
                             setHomeWorks(prevHomeworks => {
                                 console.log(prevHomeworks)
                                 return [...prevHomeworks, {
+                                    id: data.id,
                                     assignment: newMessage,
                                     deadline: dateFormatter(date, time),
                                     professorId: user.id,
@@ -81,7 +80,7 @@ export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
                                     status: 'PENDING',
                                     responseFile: null,
                                     response: null,
-                                    assignmentFile: data.file
+                                    assignmentFile: data.assignmentFile
                                 }]
                             });
                         });
@@ -96,27 +95,12 @@ export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
                     setAlertSeverity('error');
                     setAlertMessage('There was an error uploading the homework!');
                 })
-
-            // .finally(() => setUploadingFileNames(prevNames => prevNames.filter(name => name !== file.name)));
         }
         setOpen(false);
         setAlert(true);
         setNewMessage('');
         setFile(null);
     };
-
-    const VisuallyHiddenInput = styled('input')({
-        clip: 'rect(0 0 0 0)',
-        clipPath: 'inset(50%)',
-        height: 1,
-        overflow: 'hidden',
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        whiteSpace: 'nowrap',
-        width: 1,
-    });
-
 
     return (
         <div>
@@ -138,8 +122,21 @@ export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
                 <Alert onClose={handleClose} severity={alertSeverity} sx={{ width: '100%' }}>{alertMessage}</Alert>
             </Snackbar>
 
-
-            <Dialog open={open} onClose={handleClose} fullWidth>
+            <HomeworkDialog
+                open={open}
+                newMessage={newMessage}
+                setNewMessage={setNewMessage}
+                file={file}
+                handleFileChange={handleFileChange}
+                date={date}
+                handleDateChange={handleDateChange}
+                time={time}
+                setTime={setTime}
+                handleClose={handleClose}
+                handleSave={handleSave}
+                isProfessor={user.role === 'PROFESSOR'}
+            />
+            {/* <Dialog open={open} onClose={handleClose} fullWidth>
                 <DialogTitle>Add Homework</DialogTitle>
                 <DialogContent dividers sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', flexDirection: 'row', paddingBottom: '1rem', alignItems: 'center' }}>
@@ -206,18 +203,16 @@ export default function Homework({ id, setHomeWorks, setUploadingHomeworks }) {
                             padding: '1rem'
                         }}
                     >
-
                         <Button onClick={handleClose} >Cancel</Button>
                         <Button
                             variant='contained'
                             onClick={handleSave}
-                        // onClick={handleClose}
                         >
                             Save
                         </Button>
                     </Box>
                 </DialogActions>
-            </Dialog>
+            </Dialog> */}
         </div>
     )
 }

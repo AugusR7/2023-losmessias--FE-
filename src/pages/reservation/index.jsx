@@ -423,7 +423,7 @@ export default function Reservation() {
                                             {homeworks.map((homework, idx) => {
                                                 const color = homework.status === "PENDING" ? "red" : homework.status === "DONE" ? "green" : "orange"
 
-                                                return (
+                                                return (// PONER UN GRID PARA QUE TODAS LAS CARTAS TENGAN ANCHO PAREJO
                                                     <Card sx={{ display: "flex", width: "100%", marginBottom: '1rem', marginRight: '1rem' }} key={idx} >
                                                         <Button onClick={() => handleHomeworkResponse(homework)} >
                                                             <CardContent sx={{ marginLeft: '1rem' }}>
@@ -438,7 +438,7 @@ export default function Reservation() {
                                                                 <div style={{ display: "flex", flexDirection: "row", alignItems: 'center', marginBottom: '1rem' }}>
                                                                     <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Assignment:</Typography>
 
-                                                                    {homework.assignment.length > 0 ?
+                                                                    {homework.assignment.length > 0 ?// PONER UN GRID PARA QUE TODAS LAS CARTAS TENGAN ANCHO PAREJO
                                                                         <div>
                                                                             <Typography sx={{ marginLeft: '0.5rem' }}>{homework.assignment}</Typography>
                                                                         </div>
@@ -448,7 +448,7 @@ export default function Reservation() {
                                                                 </div>
                                                                 <div style={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
                                                                     <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Files:</Typography>
-                                                                    {homework.assignmentFile &&
+                                                                    {homework.assignmentFile &&// PONER UN GRID PARA QUE TODAS LAS CARTAS TENGAN ANCHO PAREJO
                                                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                                                             <Button onClick={() => handleDownload(homework.assignmentFile)}>
                                                                                 <PictureAsPdfIcon fontSize='large' />
@@ -458,15 +458,21 @@ export default function Reservation() {
                                                                         </div>
                                                                     }
                                                                 </div>
-                                                                {homework.status === "DONE" &&
+                                                                {homework.status === "DONE" &&// PONER UN GRID PARA QUE TODAS LAS CARTAS TENGAN ANCHO PAREJO
                                                                     <>
                                                                         <Divider sx={{ marginTop: '1rem', marginBottom: '1rem' }} />
                                                                         <div style={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
                                                                             <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Response:</Typography>
                                                                             {homework.response.length > 0 &&
-                                                                                <Typography sx={{ marginLeft: '0.5rem' }}>{homework.response}</Typography>
+                                                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                                    <Typography sx={{ marginLeft: '0.5rem' }}>{homework.response}</Typography>
+                                                                                </div>
                                                                             }
-                                                                            {homework.responseFile &&
+                                                                        </div>
+
+                                                                        {homework.responseFile && // PONER UN GRID PARA QUE TODAS LAS CARTAS TENGAN ANCHO PAREJO
+                                                                            <div style={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
+                                                                                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Files attached:</Typography>
                                                                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                                                                     <Button onClick={() => handleDownload(homework.responseFile)}>
                                                                                         <PictureAsPdfIcon fontSize='large' />
@@ -474,8 +480,8 @@ export default function Reservation() {
                                                                                     </Button>
                                                                                     <Typography>{' - ' + (homework.responseFile.role.toLowerCase() === user.role ? user.firstName + ' ' + user.lastName : userInfo.firstName + ' ' + userInfo.lastName)}</Typography>
                                                                                 </div>
-                                                                            }
-                                                                        </div>
+                                                                            </div>
+                                                                        }
                                                                     </>
                                                                 }
                                                             </CardContent>

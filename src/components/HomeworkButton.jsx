@@ -1,5 +1,4 @@
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Snackbar, TextField, Typography, styled } from "@mui/material";
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { Alert, Box, Button, Snackbar } from "@mui/material";
 import { useState } from "react";
 import { useUser } from "@/context/UserContext";
 import { HomeworkDialog } from "./modals/HomeworkDialog";
@@ -14,7 +13,13 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
     const [alertMessage, setAlertMessage] = useState(''); // string
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); // YYYY-MM-DD
     const [time, setTime] = useState(new Date().toISOString().slice(11, 16)); // HH:MM
-    const handleClose = () => setOpen(false);
+    const handleClose = () => {
+        setOpen(false);
+        setNewMessage('');
+        setFile(null);
+        setDate(new Date().toISOString().slice(0, 10));
+        setTime(new Date().toISOString().slice(11, 16));
+    };
 
     const handleDateChange = (event) => {
         if (event.target.value < new Date().toISOString().slice(0, 10)) {
@@ -26,6 +31,17 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
             setDate(event.target.value);
         }
     };
+
+    const handleTimeChange = (event) => {
+        if (event.target.value < new Date().toISOString().slice(11, 16)) {
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please select a time greater than the current time")
+        } else {
+            setAlert(false)
+            setTime(event.target.value);
+        }
+    }
 
     const handleFileChange = e => {
         if (e.target.files) {
@@ -131,88 +147,11 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
                 date={date}
                 handleDateChange={handleDateChange}
                 time={time}
-                setTime={setTime}
+                handleTimeChange={handleTimeChange}
                 handleClose={handleClose}
                 handleSave={handleSave}
-                isProfessor={user.role === 'PROFESSOR'}
+                isProfessor={user.role === 'professor'}
             />
-            {/* <Dialog open={open} onClose={handleClose} fullWidth>
-                <DialogTitle>Add Homework</DialogTitle>
-                <DialogContent dividers sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-                    <div style={{ display: 'flex', flexDirection: 'row', paddingBottom: '1rem', alignItems: 'center' }}>
-                        <div style={{ paddingInline: '2rem' }}>
-                            <TextField
-                                multiline
-                                rows={3}
-                                fullWidth
-                                value={newMessage}
-                                label='Homework message'
-                                onChange={event => {
-                                    setNewMessage(event.target.value);
-                                }}
-                            />
-                        </div>
-                        <Divider orientation='vertical' flexItem />
-                        <div style={{ paddingInline: '2rem' }}>
-                            <Button component='label' variant='contained' startIcon={<CloudUploadIcon />}>
-                                Upload file
-                                <VisuallyHiddenInput
-                                    type='file'
-                                    name='file'
-                                    onChange={handleFileChange}
-                                />
-                            </Button>
-                            <Typography>{file?.name}</Typography>
-                        </div>
-                    </div>
-
-                    <Divider orientation='horizontal' flexItem />
-                    <div style={{ paddingTop: '1.5rem' }}>
-                        <TextField
-                            id="date"
-                            label="Due Date"
-                            type="date"
-                            defaultValue={date}
-                            value={date}
-                            onChange={event => handleDateChange(event)}
-                            sx={{ width: 220 }}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                        />
-                        <TextField
-                            id="time"
-                            label="Due Time"
-                            type="time"
-                            defaultValue={time}
-                            value={time}
-                            onChange={event => setTime(event.target.value)}
-                            sx={{ width: 120, marginLeft: 2 }}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                        />
-                    </div>
-                </DialogContent>
-                <DialogActions>
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            padding: '1rem'
-                        }}
-                    >
-                        <Button onClick={handleClose} >Cancel</Button>
-                        <Button
-                            variant='contained'
-                            onClick={handleSave}
-                        >
-                            Save
-                        </Button>
-                    </Box>
-                </DialogActions>
-            </Dialog> */}
         </div>
     )
 }

@@ -100,7 +100,7 @@ export default function StudentLandingPage() {
         } else {
             router.push('/');
         }
-    }, [user, router.isReady]);
+    }, [user, router]);
 
     const handleFeedback = () => {
         setIsLoadingFeedback(true);
@@ -180,8 +180,8 @@ export default function StudentLandingPage() {
                             {feedbackStatus === 'info'
                                 ? 'Sending feedback...'
                                 : feedbackStatus === 'success'
-                                ? 'Feedback sent!'
-                                : 'Error sending feedback'}
+                                    ? 'Feedback sent!'
+                                    : 'Error sending feedback'}
                         </Alert>
                     </Snackbar>
 
@@ -243,14 +243,14 @@ export default function StudentLandingPage() {
                                 </tr>
                             </tbody>
                         </table>
-                        {windowSize.width > 500 && <CalendarPagination week={week} setWeek={setWeek} setSelectedBlocks={() => {}} />}
+                        {windowSize.width > 500 && <CalendarPagination week={week} setWeek={setWeek} setSelectedBlocks={() => { }} />}
                     </div>
                     {windowSize.width <= 500 && (
-                        <CalendarPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={() => {}} />
+                        <CalendarPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={() => { }} />
                     )}
                     <Calendar
                         selectedBlocks={[]}
-                        setSelectedBlocks={() => {}}
+                        setSelectedBlocks={() => { }}
                         disabledBlocks={disabledBlocks}
                         week={week}
                         day={day}

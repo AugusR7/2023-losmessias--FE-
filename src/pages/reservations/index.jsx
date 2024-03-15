@@ -104,7 +104,7 @@ export default function Reservation() {
         } else {
             router.push('/');
         }
-    }, [user, router]);
+    }, [user, router, disabledBlocks]);
 
     const handleCancel = () => {
         setSelectedBlocks([]);

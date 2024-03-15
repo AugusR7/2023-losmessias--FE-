@@ -1,6 +1,6 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, TextField, Typography, styled } from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFileChange, date, handleDateChange, time, setTime, handleSave, handleClose, isProfessor }) {
+export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFileChange, date, handleDateChange, time, handleTimeChange, handleSave, handleClose, isProfessor }) {
 
     const VisuallyHiddenInput = styled('input')({
         clip: 'rect(0 0 0 0)',
@@ -66,7 +66,7 @@ export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFi
                                 type="time"
                                 defaultValue={time}
                                 value={time}
-                                onChange={event => setTime(event.target.value)}
+                                onChange={handleTimeChange}
                                 sx={{ width: 120, marginLeft: 2 }}
                                 InputLabelProps={{
                                     shrink: true,

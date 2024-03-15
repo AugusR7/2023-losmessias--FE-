@@ -8,7 +8,6 @@ import {
     Box,
     Button,
     Card,
-    CardActionArea,
     CardContent,
     CircularProgress,
     Dialog,
@@ -16,6 +15,7 @@ import {
     DialogContent,
     DialogTitle,
     Divider,
+    Grid,
     List,
     ListItemButton,
     Skeleton,
@@ -68,9 +68,28 @@ export default function Reservation() {
     const handleCloseHomeworkDialog = () => setOpenHomeworkDialog(false);
 
     const handleHomeworkResponse = (homework) => {
-        if (homework.status !== "PENDING") return;
-        setHomeworkToRespond(homework);
-        setOpenHomeworkDialog(true);
+        if (user.role !== "student") {
+            setAlert(true);
+            setAlertSeverity('error');
+            setAlertMessage('Only students can answer homework');
+            return
+        }
+        if (homework.status === "DONE") {
+            setAlert(true);
+            setAlertSeverity('error');
+            setAlertMessage('This homework has already been answered');
+            return
+        }
+        if (homework.status === "LATE") {
+            setAlert(true);
+            setAlertSeverity('warning');
+            setAlertMessage('You can\'t answer this homework because it is outdated');
+            return
+        }
+        if (homework.status === "PENDING" && user.role === "student") {
+            setHomeworkToRespond(homework);
+            setOpenHomeworkDialog(true);
+        }
     }
 
     const handleFileChange = e => {
@@ -265,7 +284,7 @@ export default function Reservation() {
                 onClose={() => setAlert(false)}
                 anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             >
-                <Alert onClose={handleClose} severity={alertSeverity} sx={{ width: '100%' }}>{alertMessage}</Alert>
+                <Alert onClose={() => setAlert(false)} severity={alertSeverity} sx={{ width: '100%' }}>{alertMessage}</Alert>
             </Snackbar>
             <div
                 style={
@@ -421,12 +440,12 @@ export default function Reservation() {
                                                 </div>
                                             ))}
                                             {homeworks.map((homework, idx) => {
-                                                const color = homework.status === "PENDING" ? "red" : homework.status === "DONE" ? "green" : "orange"
+                                                const color = homework.status === "PENDING" ? "red" : homework.status === "DONE" ? "green" : "orange";
 
-                                                return (// PONER UN GRID PARA QUE TODAS LAS CARTAS TENGAN ANCHO PAREJO
+                                                return (
                                                     <Card sx={{ display: "flex", width: "100%", marginBottom: '1rem', marginRight: '1rem' }} key={idx} >
-                                                        <Button onClick={() => handleHomeworkResponse(homework)} >
-                                                            <CardContent sx={{ marginLeft: '1rem' }}>
+                                                        <Button onClick={() => handleHomeworkResponse(homework)} sx={{ width: '100%' }}>
+                                                            <CardContent sx={{ marginLeft: '1rem', width: '100%' }}>
                                                                 <div style={{ display: "flex", flexDirection: "row", alignItems: 'center', marginBottom: '1rem', justifyContent: 'center' }}>
                                                                     <Typography variant='h6' sx={{ color: color, fontWeight: 'bold' }}>{homework.status}</Typography>
                                                                     {homework.status === "PENDING" &&
@@ -435,52 +454,64 @@ export default function Reservation() {
                                                                         </Typography>
                                                                     }
                                                                 </div>
-                                                                <div style={{ display: "flex", flexDirection: "row", alignItems: 'center', marginBottom: '1rem' }}>
-                                                                    <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Assignment:</Typography>
+                                                                <Grid container>
+                                                                    <Grid item xs={3} sx={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
+                                                                        <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Assignment:</Typography>
+                                                                    </Grid>
+                                                                    <Grid item xs={9} sx={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
+                                                                        {homework.assignment.length > 0 ?
+                                                                            <div>
+                                                                                <Typography sx={{ marginLeft: '0.5rem' }}>{homework.assignment}</Typography>
+                                                                            </div>
+                                                                            :
+                                                                            <Typography sx={{ marginLeft: '0.5rem', fontStyle: 'italic' }}>Homework assignment determined by file</Typography>
+                                                                        }
+                                                                    </Grid>
+                                                                </Grid>
 
-                                                                    {homework.assignment.length > 0 ?// PONER UN GRID PARA QUE TODAS LAS CARTAS TENGAN ANCHO PAREJO
-                                                                        <div>
-                                                                            <Typography sx={{ marginLeft: '0.5rem' }}>{homework.assignment}</Typography>
-                                                                        </div>
-                                                                        :
-                                                                        <Typography sx={{ marginLeft: '0.5rem', fontStyle: 'italic' }}>Homework assignment determined by file</Typography>
-                                                                    }
-                                                                </div>
-                                                                <div style={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
-                                                                    <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Files:</Typography>
-                                                                    {homework.assignmentFile &&// PONER UN GRID PARA QUE TODAS LAS CARTAS TENGAN ANCHO PAREJO
-                                                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                                {homework.assignmentFile &&
+                                                                    <Grid container>
+                                                                        <Grid item xs={3} sx={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
+                                                                            <Typography variant='h6' sx={{ fontWeight: 'bold' }}>File attached:</Typography>
+                                                                        </Grid>
+                                                                        <Grid item xs={9} sx={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
                                                                             <Button onClick={() => handleDownload(homework.assignmentFile)}>
                                                                                 <PictureAsPdfIcon fontSize='large' />
                                                                                 <Typography sx={{ marginLeft: '0.5rem' }}>{homework.assignmentFile.fileName}</Typography>
                                                                             </Button>
                                                                             <Typography>{' - ' + (homework.assignmentFile.role.toLowerCase() === user.role ? user.firstName + ' ' + user.lastName : userInfo.firstName + ' ' + userInfo.lastName)}</Typography>
-                                                                        </div>
-                                                                    }
-                                                                </div>
-                                                                {homework.status === "DONE" &&// PONER UN GRID PARA QUE TODAS LAS CARTAS TENGAN ANCHO PAREJO
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                }
+                                                                {homework.status === "DONE" &&
                                                                     <>
                                                                         <Divider sx={{ marginTop: '1rem', marginBottom: '1rem' }} />
-                                                                        <div style={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
-                                                                            <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Response:</Typography>
-                                                                            {homework.response.length > 0 &&
-                                                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                                    <Typography sx={{ marginLeft: '0.5rem' }}>{homework.response}</Typography>
-                                                                                </div>
-                                                                            }
-                                                                        </div>
+                                                                        {homework.response.length > 0 &&
+                                                                            <Grid container>
+                                                                                <Grid item xs={3} sx={{ display: "flex", flexDirection: "row", alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                                                    <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Response:</Typography>
+                                                                                </Grid>
+                                                                                <Grid item xs={9} sx={{ display: "flex", flexDirection: "row", alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                                                    {homework.response.length > 0 &&
+                                                                                        <Typography sx={{ marginLeft: '0.5rem' }}>{homework.response}</Typography>
+                                                                                    }
+                                                                                </Grid>
+                                                                            </Grid>
+                                                                        }
 
-                                                                        {homework.responseFile && // PONER UN GRID PARA QUE TODAS LAS CARTAS TENGAN ANCHO PAREJO
-                                                                            <div style={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
-                                                                                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>Files attached:</Typography>
-                                                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                                        {homework.responseFile &&
+                                                                            <Grid container>
+                                                                                <Grid item xs={3} sx={{ display: "flex", flexDirection: "row", alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                                                    <Typography variant='h6' sx={{ fontWeight: 'bold' }}>File attached:</Typography>
+                                                                                </Grid>
+                                                                                <Grid item xs={9} sx={{ display: "flex", flexDirection: "row", alignItems: 'center', justifyContent: 'flex-start' }}>
                                                                                     <Button onClick={() => handleDownload(homework.responseFile)}>
                                                                                         <PictureAsPdfIcon fontSize='large' />
                                                                                         <Typography sx={{ marginLeft: '0.5rem' }}>{homework.responseFile.fileName}</Typography>
                                                                                     </Button>
                                                                                     <Typography>{' - ' + (homework.responseFile.role.toLowerCase() === user.role ? user.firstName + ' ' + user.lastName : userInfo.firstName + ' ' + userInfo.lastName)}</Typography>
-                                                                                </div>
-                                                                            </div>
+                                                                                </Grid>
+                                                                            </Grid>
                                                                         }
                                                                     </>
                                                                 }
@@ -496,103 +527,106 @@ export default function Reservation() {
                         </div>
                     </div>
                 </>
-            )}
+            )
+            }
 
-            {windowSize.width <= 500 && (
-                <div style={{ margin: '2rem auto' }}>
-                    {isLoadingContent ? (
-                        <Skeleton variant='rectangular' height={60} style={{ borderRadius: 10 }} />
-                    ) : (
-                        <List>
-                            {uploadingComments.map((comment, idx) => (
-                                <div
-                                    key={idx}
-                                    style={{
-                                        flexDirection: 'row',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        backgroundColor: 'rgb(144, 199, 255)',
-                                        height: 50,
-                                        borderRadius: 10,
-                                    }}
-                                >
-                                    <CircularProgress size={30} sx={{ ml: 2, mr: 2 }} />
-                                    <Typography>Posting </Typography>{' '}
-                                    <Typography sx={{ ml: 1, fontWeight: 'bold', fontStyle: 'italic' }}> {comment}</Typography>
-                                </div>
-                            ))}
-                            {comments.map((com, idx) => {
-                                let author = userInfo;
-                                if (com.role.toLowerCase() === user.role) author = user;
-                                return (
-                                    <ListItemButton
-                                        onClick={() => handleClick(com.comment)}
+            {
+                windowSize.width <= 500 && (
+                    <div style={{ margin: '2rem auto' }}>
+                        {isLoadingContent ? (
+                            <Skeleton variant='rectangular' height={60} style={{ borderRadius: 10 }} />
+                        ) : (
+                            <List>
+                                {uploadingComments.map((comment, idx) => (
+                                    <div
                                         key={idx}
                                         style={{
+                                            flexDirection: 'row',
                                             display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: com.role.toLowerCase() !== user.role ? 'flex-end' : 'flex-start',
+                                            alignItems: 'center',
+                                            backgroundColor: 'rgb(144, 199, 255)',
+                                            height: 50,
+                                            borderRadius: 10,
                                         }}
                                     >
-                                        <Typography>{author.firstName + ' ' + author.lastName}</Typography>
-                                        <Typography variant='caption' sx={{ marginLeft: '0.5rem' }}>
-                                            {parse(com.uploadedDateTime)}
-                                        </Typography>
-                                    </ListItemButton>
-                                );
-                            })}
-
-                            <Divider />
-
-                            {uploadingFileNames.map((fileName, idx) => (
-                                <div
-                                    key={idx}
-                                    style={{
-                                        flexDirection: 'row',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        backgroundColor: 'rgb(144, 199, 255)',
-                                        height: 50,
-                                        borderRadius: 10,
-                                    }}
-                                >
-                                    <CircularProgress size={30} sx={{ ml: 2, mr: 2 }} />
-                                    <Typography>Uploading </Typography>{' '}
-                                    <Typography sx={{ ml: 1, fontWeight: 'bold', fontStyle: 'italic' }}> {fileName}</Typography>
-                                    <PictureAsPdfIcon fontSize='large' sx={{ ml: 2, mr: 2, color: 'gray' }} />
-                                </div>
-                            ))}
-                            {files.map((file, idx) => {
-                                let author = userInfo;
-                                if (file.role.toLowerCase() === user.role) author = user;
-
-                                return (
-                                    <ListItemButton
-                                        onClick={() => handleDownload(file)}
-                                        key={idx}
-                                        style={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: file.role.toLowerCase() !== user.role ? 'flex-end' : 'flex-start',
-                                        }}
-                                    >
-                                        <Typography>{author.firstName + ' ' + author.lastName}</Typography>
-
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <PictureAsPdfIcon fontSize='large' color='primary' />
-                                            <Typography sx={{ marginLeft: '0.5rem' }} color='primary'>
-                                                {file.fileName}
+                                        <CircularProgress size={30} sx={{ ml: 2, mr: 2 }} />
+                                        <Typography>Posting </Typography>{' '}
+                                        <Typography sx={{ ml: 1, fontWeight: 'bold', fontStyle: 'italic' }}> {comment}</Typography>
+                                    </div>
+                                ))}
+                                {comments.map((com, idx) => {
+                                    let author = userInfo;
+                                    if (com.role.toLowerCase() === user.role) author = user;
+                                    return (
+                                        <ListItemButton
+                                            onClick={() => handleClick(com.comment)}
+                                            key={idx}
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: com.role.toLowerCase() !== user.role ? 'flex-end' : 'flex-start',
+                                            }}
+                                        >
+                                            <Typography>{author.firstName + ' ' + author.lastName}</Typography>
+                                            <Typography variant='caption' sx={{ marginLeft: '0.5rem' }}>
+                                                {parse(com.uploadedDateTime)}
                                             </Typography>
-                                        </div>
-                                    </ListItemButton>
-                                );
-                            })}
-                        </List>
-                    )}
-                </div>
-            )}
+                                        </ListItemButton>
+                                    );
+                                })}
 
-            <Dialog open={open} onClose={handleClose} fullWidth>
+                                <Divider />
+
+                                {uploadingFileNames.map((fileName, idx) => (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            flexDirection: 'row',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            backgroundColor: 'rgb(144, 199, 255)',
+                                            height: 50,
+                                            borderRadius: 10,
+                                        }}
+                                    >
+                                        <CircularProgress size={30} sx={{ ml: 2, mr: 2 }} />
+                                        <Typography>Uploading </Typography>{' '}
+                                        <Typography sx={{ ml: 1, fontWeight: 'bold', fontStyle: 'italic' }}> {fileName}</Typography>
+                                        <PictureAsPdfIcon fontSize='large' sx={{ ml: 2, mr: 2, color: 'gray' }} />
+                                    </div>
+                                ))}
+                                {files.map((file, idx) => {
+                                    let author = userInfo;
+                                    if (file.role.toLowerCase() === user.role) author = user;
+
+                                    return (
+                                        <ListItemButton
+                                            onClick={() => handleDownload(file)}
+                                            key={idx}
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: file.role.toLowerCase() !== user.role ? 'flex-end' : 'flex-start',
+                                            }}
+                                        >
+                                            <Typography>{author.firstName + ' ' + author.lastName}</Typography>
+
+                                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                <PictureAsPdfIcon fontSize='large' color='primary' />
+                                                <Typography sx={{ marginLeft: '0.5rem' }} color='primary'>
+                                                    {file.fileName}
+                                                </Typography>
+                                            </div>
+                                        </ListItemButton>
+                                    );
+                                })}
+                            </List>
+                        )}
+                    </div>
+                )
+            }
+
+            < Dialog open={open} onClose={handleClose} fullWidth >
                 <DialogTitle>Message</DialogTitle>
 
                 <DialogContent>

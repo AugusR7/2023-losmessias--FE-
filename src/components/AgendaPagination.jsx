@@ -1,7 +1,7 @@
 import useWindowSize from '@/hooks/useWindowSize';
 import { Button, Typography } from '@mui/material';
 
-export default function CalendarPagination({ week, setWeek, day, setDay, setSelectedBlocks }) {
+export default function AgendaPagination({ week, setWeek, day, setDay, setSelectedBlocks }) {
     const curr_date = new Date();
     const aux_date = new Date();
     const first = curr_date.getDate() - curr_date.getDay();

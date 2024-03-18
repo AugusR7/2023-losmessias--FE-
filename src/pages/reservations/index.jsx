@@ -23,13 +23,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
 // Components
-import Calendar from '@/components/Calendar';
+import Agenda from '@/components/Agenda';
 import HorizontalProfessorCard from './components/HorizontalProfessorCard';
 
 // Utils
 import { order_and_group } from '@/utils/order_and_group';
 import { useUser } from '@/context/UserContext';
-import CalendarPagination from '@/components/CalendarPagination';
+import AgendaPagination from '@/components/AgendaPagination';
 import Upload from '@/components/Upload';
 import LoadingModal from '@/components/modals/LoadingModal';
 import useSWR from 'swr';
@@ -255,13 +255,13 @@ export default function Reservation() {
                         </tbody>
                     </table>
 
-                    {windowSize.width > 500 && <CalendarPagination week={week} setWeek={setWeek} setSelectedBlocks={setSelectedBlocks} />}
+                    {windowSize.width > 500 && <AgendaPagination week={week} setWeek={setWeek} setSelectedBlocks={setSelectedBlocks} />}
                 </div>
                 {windowSize.width <= 500 && (
-                    <CalendarPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={setSelectedBlocks} />
+                    <AgendaPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={setSelectedBlocks} />
                 )}
 
-                <Calendar
+                <Agenda
                     selectedBlocks={selectedBlocks}
                     setSelectedBlocks={setSelectedBlocks}
                     disabledBlocks={disabledBlocks}

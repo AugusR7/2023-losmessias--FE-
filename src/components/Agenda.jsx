@@ -66,7 +66,7 @@ const styles = {
     },
 };
 
-export default function Calendar({ selectedBlocks, setSelectedBlocks, disabledBlocks, week, day, interactive = true, showData = false }) {
+export default function Agenda({ selectedBlocks, setSelectedBlocks, disabledBlocks, week, day, interactive = true, showData = false }) {
     var curr_date = new Date();
     var first = curr_date.getDate() - curr_date.getDay();
     const user = useUser();

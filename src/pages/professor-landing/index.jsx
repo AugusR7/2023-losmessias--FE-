@@ -1,5 +1,5 @@
-import Calendar from '@/components/Calendar';
-import CalendarPagination from '@/components/CalendarPagination';
+import Agenda from '@/components/Agenda';
+import AgendaPagination from '@/components/AgendaPagination';
 import Dashboard from '@/components/Dashboard';
 import { useUser } from '@/context/UserContext';
 import { order_and_group } from '@/utils/order_and_group';
@@ -373,12 +373,12 @@ export default function ProfessorLandingPage() {
                                     </tbody>
                                 </table>
                                 {windowSize.width > 500 && (
-                                    <CalendarPagination week={week} setWeek={setWeek} setSelectedBlocks={setSelectedBlocks} />
+                                    <AgendaPagination week={week} setWeek={setWeek} setSelectedBlocks={setSelectedBlocks} />
                                 )}
                             </div>
 
                             {windowSize.width <= 500 && (
-                                <CalendarPagination
+                                <AgendaPagination
                                     week={week}
                                     setWeek={setWeek}
                                     day={day}
@@ -386,7 +386,7 @@ export default function ProfessorLandingPage() {
                                     setSelectedBlocks={setSelectedBlocks}
                                 />
                             )}
-                            <Calendar
+                            <Agenda
                                 selectedBlocks={selectedBlocks}
                                 setSelectedBlocks={setSelectedBlocks}
                                 disabledBlocks={disabledBlocks}
@@ -434,6 +434,7 @@ export default function ProfessorLandingPage() {
                         </>
                     )}
                     {tab === 1 && <Dashboard id={user.id} />}
+                    {/* {tab===2} */}
 
                     {pendingFeedback.length > 0 && (
                         <Dialog open={giveFeedback} onClose={() => setGiveFeedback(false)}>

@@ -1,5 +1,5 @@
-import Calendar from '@/components/Calendar';
-import CalendarPagination from '@/components/CalendarPagination';
+import Agenda from '@/components/Agenda';
+import AgendaPagination from '@/components/AgendaPagination';
 import { useUser } from '@/context/UserContext';
 import {
     Button,
@@ -243,12 +243,12 @@ export default function StudentLandingPage() {
                                 </tr>
                             </tbody>
                         </table>
-                        {windowSize.width > 500 && <CalendarPagination week={week} setWeek={setWeek} setSelectedBlocks={() => { }} />}
+                        {windowSize.width > 500 && <AgendaPagination week={week} setWeek={setWeek} setSelectedBlocks={() => { }} />}
                     </div>
                     {windowSize.width <= 500 && (
-                        <CalendarPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={() => { }} />
+                        <AgendaPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={() => { }} />
                     )}
-                    <Calendar
+                    <Agenda
                         selectedBlocks={[]}
                         setSelectedBlocks={() => { }}
                         disabledBlocks={disabledBlocks}

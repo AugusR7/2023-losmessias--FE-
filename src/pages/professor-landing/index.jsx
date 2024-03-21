@@ -63,6 +63,7 @@ export default function ProfessorLandingPage() {
     const [day, setDay] = useState(1);
     const windowSize = useWindowSize();
     const [nullFeedback, setNullFeedback] = useState(false);
+    const [events, setEvents] = useState([]);
 
     var curr = new Date();
     var first = curr.getDate() - curr.getDay();
@@ -126,6 +127,14 @@ export default function ProfessorLandingPage() {
                     });
                 }
             });
+            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/user/${user.id}?role=` + user.role.toUpperCase(), requestOptions)
+                .then(res => {
+                    if (res.ok) {
+                        res.json().then(json => {
+                            setEvents(json);
+                        });
+                    }
+                });
         } else {
             router.push('/');
         }
@@ -437,9 +446,7 @@ export default function ProfessorLandingPage() {
                     )}
                     {tab === 1 && <Dashboard id={user.id} />}
                     {tab === 2 &&
-                        <Calendar
-                        
-                        />
+                        <Calendar events={events} />
                     }
 
                     {pendingFeedback.length > 0 && (

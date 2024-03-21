@@ -116,8 +116,6 @@ export default function StudentLandingPage() {
                 .catch(error => {
                     console.error('There was an error!', error);
                 });
-
-
             setIsLoading(false);
         } else {
             router.push('/');

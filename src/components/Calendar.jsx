@@ -24,12 +24,13 @@ export default function Calendar({ events }) {
         // Do something...
     }
 
-    const WeekdayContainer = ({ children }) => {
+    const WeekdayContainer = ({ children, style }) => {
         return (
             <Grid item xs={12 / 7} sx={{
                 border: '1px solid #e0e0e0',
                 padding: 1,
                 textAlign: 'center',
+                ...style
             }}>
                 {children}
             </Grid>
@@ -58,6 +59,10 @@ export default function Calendar({ events }) {
     const firstDayOfTheWeek = new Date(year, month - 1).getDay();
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const lastDaysOfPreviousMonth = Array.from({ length: firstDayOfTheWeek }, (_, i) => i + 1).map(day => day - 1).reverse();
+    const lastDayOfTheMonth = new Date(year, month, 0).getDay();
+    // const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    // console.log(lastDayOfTheMonth)
+    // console.log(days[lastDayOfTheMonth])
 
     const verifyInclusion = (initialDate, finalDate, date) => {
         const initial = new Date(initialDate[0], initialDate[1], initialDate[2]);
@@ -90,8 +95,9 @@ export default function Calendar({ events }) {
                             ))}
                             {Array.from({ length: numberOfDaysInMonth }, (_, i) => i + 1).map((day, index) => {
                                 const event_on_this_day = events.find(event => verifyInclusion(event.startDate, event.endDate, [year, month, day]))
+                                const radius = index === numberOfDaysInMonth - 1 ? 10 : 0;
                                 return (
-                                    <WeekdayContainer key={index}>
+                                    <WeekdayContainer key={index} style={{ borderBottomLeftRadius: radius }}>
                                         <Typography>{day}</Typography>
                                         {events.map((event, index) => {
                                             const calendarDay = day < 10 ? `0${day}` : day;
@@ -117,6 +123,14 @@ export default function Calendar({ events }) {
                                                 <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>No events on this day</Typography>
                                             </div>
                                         }
+                                    </WeekdayContainer>
+                                )
+                            })}
+                            {Array.from({ length: 6 - lastDayOfTheMonth }, (_, i) => i + 1).map((day, index) => {
+                                const radius = index === 6 - lastDayOfTheMonth - 1 ? 10 : 0;
+                                return (
+                                    <WeekdayContainer key={index} style={{ borderBottomRightRadius: radius }}>
+                                        <Typography sx={{ color: 'gray' }} >{day}</Typography>
                                     </WeekdayContainer>
                                 )
                             })}

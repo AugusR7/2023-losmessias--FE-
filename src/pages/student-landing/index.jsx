@@ -15,6 +15,8 @@ import {
     CircularProgress,
     Snackbar,
     Alert,
+    Tabs,
+    Tab,
 } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -22,8 +24,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import useWindowSize from '@/hooks/useWindowSize';
-import useSWR from 'swr';
-import { fetcherGetWithTokenFeedbacks } from '@/helpers/FetchHelpers';
+import Calendar from '@/components/Calendar';
 
 export default function StudentLandingPage() {
     const [week, setWeek] = useState(0);
@@ -37,8 +38,14 @@ export default function StudentLandingPage() {
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
     const [feedbackStatus, setFeedbackStatus] = useState('info');
     const [autoHideDuration, setAutoHideDuration] = useState(null);
+    const [tab, setTab] = useState(0);
     const windowSize = useWindowSize();
+    const [events, setEvents] = useState([]);
     var router = useRouter();
+
+    const handleTabChange = (event, newValue) => {
+        setTab(newValue);
+    };
 
     useEffect(() => {
         setIsLoading(true);
@@ -95,6 +102,21 @@ export default function StudentLandingPage() {
                     });
                 });
             });
+
+            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/user/${user.id}?role=` + user.role.toUpperCase(), requestOptions)
+                .then(response => {
+                    // console.log(response)
+                    if (response.ok) {
+                        return response.json().then(data => {
+                            // console.log(data)
+                            setEvents(data)
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('There was an error!', error);
+                });
+
 
             setIsLoading(false);
         } else {
@@ -203,60 +225,72 @@ export default function StudentLandingPage() {
                             </Typography>
                         </>
                     )}
-
+                    <Tabs value={tab} onChange={handleTabChange} >
+                        <Tab label="Agenda" />
+                        <Tab label="Feedback" />
+                    </Tabs>
                     <Divider />
-                    <div style={{ paddingBlock: '0.75rem' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <table style={{ height: '35px' }}>
-                            <tbody>
-                                <tr>
-                                    <td
-                                        style={{
-                                            width: '130px',
-                                            borderBlock: '1px solid #338aed70',
-                                            backgroundColor: '#338aed90',
-                                            textAlign: 'center',
-                                        }}
-                                    >
-                                        <Typography>Selected block</Typography>
-                                    </td>
-                                    <td
-                                        style={{
-                                            textAlign: 'center',
-                                            width: '130px',
-                                            borderBlock: '1px solid #e64b4b70',
-                                            backgroundColor: '#e64b4b90',
-                                        }}
-                                    >
-                                        <Typography>Reserved Class</Typography>
-                                    </td>
-                                    <td
-                                        style={{
-                                            textAlign: 'center',
-                                            width: '130px',
-                                            borderBlock: '1px solid #adadad70',
-                                            backgroundColor: '#adadad90',
-                                        }}
-                                    >
-                                        <Typography>Unavailable</Typography>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        {windowSize.width > 500 && <AgendaPagination week={week} setWeek={setWeek} setSelectedBlocks={() => { }} />}
-                    </div>
-                    {windowSize.width <= 500 && (
-                        <AgendaPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={() => { }} />
+                    {tab === 0 && (
+                        <>
+                            <div style={{ paddingBlock: '0.75rem' }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <table style={{ height: '35px' }}>
+                                    <tbody>
+                                        <tr>
+                                            <td
+                                                style={{
+                                                    width: '130px',
+                                                    borderBlock: '1px solid #338aed70',
+                                                    backgroundColor: '#338aed90',
+                                                    textAlign: 'center',
+                                                }}
+                                            >
+                                                <Typography>Selected block</Typography>
+                                            </td>
+                                            <td
+                                                style={{
+                                                    textAlign: 'center',
+                                                    width: '130px',
+                                                    borderBlock: '1px solid #e64b4b70',
+                                                    backgroundColor: '#e64b4b90',
+                                                }}
+                                            >
+                                                <Typography>Reserved Class</Typography>
+                                            </td>
+                                            <td
+                                                style={{
+                                                    textAlign: 'center',
+                                                    width: '130px',
+                                                    borderBlock: '1px solid #adadad70',
+                                                    backgroundColor: '#adadad90',
+                                                }}
+                                            >
+                                                <Typography>Unavailable</Typography>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                {windowSize.width > 500 && <AgendaPagination week={week} setWeek={setWeek} setSelectedBlocks={() => { }} />}
+                            </div>
+                            {windowSize.width <= 500 && (
+                                <AgendaPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={() => { }} />
+                            )}
+                            <Agenda
+                                selectedBlocks={[]}
+                                setSelectedBlocks={() => { }}
+                                disabledBlocks={disabledBlocks}
+                                week={week}
+                                day={day}
+                                interactive={false}
+                                showData
+                            />
+                        </>
                     )}
-                    <Agenda
-                        selectedBlocks={[]}
-                        setSelectedBlocks={() => { }}
-                        disabledBlocks={disabledBlocks}
-                        week={week}
-                        day={day}
-                        interactive={false}
-                        showData
-                    />
+                    {tab === 1 && (
+                        <Calendar
+                            events={events}
+                        />
+                    )}
 
                     {pendingFeedback.length > 0 && (
                         <Dialog open={giveFeedback} onClose={() => setGiveFeedback(false)}>

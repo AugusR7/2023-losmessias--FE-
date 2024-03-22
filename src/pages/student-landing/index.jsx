@@ -38,7 +38,7 @@ export default function StudentLandingPage() {
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
     const [feedbackStatus, setFeedbackStatus] = useState('info');
     const [autoHideDuration, setAutoHideDuration] = useState(null);
-    const [tab, setTab] = useState(0);
+    const [tab, setTab] = useState(1);
     const windowSize = useWindowSize();
     const [events, setEvents] = useState([]);
     var router = useRouter();
@@ -82,7 +82,6 @@ export default function StudentLandingPage() {
                                     prev.forEach(pfed => {
                                         if (pfed.reservation_id === reservation) exists = true;
                                     });
-
                                     if (!exists)
                                         return [
                                             ...prev,
@@ -103,19 +102,77 @@ export default function StudentLandingPage() {
                 });
             });
 
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/user/${user.id}?role=` + user.role.toUpperCase(), requestOptions)
+            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/user/${user.id}`, requestOptions)
                 .then(response => {
-                    // console.log(response)
                     if (response.ok) {
                         return response.json().then(data => {
-                            // console.log(data)
                             setEvents(data)
                         });
                     }
+                }).then(() => {
+                    fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/homework/getByStudent/${user.id}`, requestOptions)
+                        .then(response => {
+                            if (response.ok) {
+                                return response.json().then(data => {
+                                    data.forEach(item => {
+                                        const year = parseInt(item.deadline.split('-')[0]);
+                                        const month = parseInt(item.deadline.split('-')[1]);
+                                        const day = parseInt(item.deadline.split('-')[2]);
+                                        const hour = parseInt(item.deadline.split('T')[1].split(':')[0]);
+                                        const minute = parseInt(item.deadline.split('T')[1].split(':')[1]);
+                                        item.deadline = [year, month, day, hour, minute];
+                                        setEvents(prev => {
+                                            const coincidencias = prev.find(e => {
+                                                if (e.type === 'HOMEWORK') {
+                                                    if (e.endDate[0] == item.deadline[0]
+                                                        && e.endDate[1] == item.deadline[1]
+                                                        && e.endDate[2] == item.deadline[2]
+                                                        && e.endDate[3] == item.deadline[3]
+                                                        && e.endDate[4] == item.deadline[4]
+                                                        && e.response === item.response
+                                                        && e.assignment === item.assignment)
+                                                        return e
+                                                }
+                                            })
+                                            if (!coincidencias)
+                                                return [
+                                                    ...prev, {
+                                                        id: prev.length + 1,
+                                                        title: 'Homework',
+                                                        description: item.assignment,
+                                                        endDate: item.deadline,
+                                                        startDate: item.deadline,
+                                                        userId: item.studentId,
+                                                        type: 'HOMEWORK',
+                                                        assignment: item.assignment,
+                                                        assignmentFile: item.assignmentFile,
+                                                        response: item.response,
+                                                        responseFile: item.responseFile,
+                                                        status: item.status
+                                                    }]
+                                            else return prev
+                                        });
+
+                                    })
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('There was an error fetching homeworks!', error);
+                        });
                 })
                 .catch(error => {
                     console.error('There was an error!', error);
                 });
+            // {
+            //     id: 1,
+            //     title: 'Química',
+            //     description: 'Examen final',
+            //     startDate: [ 2024, 1, 1, 10, 0 ],
+            //     endDate: [ 2024, 1, 1, 10, 0 ],
+            //     userId: 3,
+            //     type: 'EXAM'
+            //   }
             setIsLoading(false);
         } else {
             router.push('/');

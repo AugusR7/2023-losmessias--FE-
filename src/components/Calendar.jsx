@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 
 export default function Calendar({ events }) {
-    console.log(events)
+    // console.log(events)
 
     const handleCellClick = (event, row, day) => {
         // Do something...
@@ -101,19 +101,34 @@ export default function Calendar({ events }) {
                                         <Typography>{day}</Typography>
                                         {events.map((event, index) => {
                                             const calendarDay = day < 10 ? `0${day}` : day;
-                                            verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])
-                                            const color = event.type === 'EXAM' ? '#f28f6a' : event.type === "PROJECT_PRESENTATION" ? "#099ce5" : "#f2d74e";
-                                            if (verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
-                                                const startHour = event.startDate[3] < 10 ? `0${event.startDate[3]}` : event.startDate[3];
-                                                const startMinute = event.startDate[4] < 10 ? `0${event.startDate[4]}` : event.startDate[4];
-                                                const endHour = event.endDate[3] < 10 ? `0${event.endDate[3]}` : event.endDate[3];
-                                                const endMinute = event.endDate[4] < 10 ? `0${event.endDate[4]}` : event.endDate[4];
-                                                const startTime = startHour + ':' + startMinute;
-                                                const endTime = endHour + ':' + endMinute;
+                                            // console.log(event)
+                                            const color = event.type === 'EXAM' ? '#f28f6a' : event.type === "PROJECT_PRESENTATION" ? "#099ce5" : "#fff952";
+                                            if (event.type !== 'HOMEWORK') {
+                                                verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])
+                                                if (verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
+                                                    const startHour = event.startDate[3] < 10 ? `0${event.startDate[3]}` : event.startDate[3];
+                                                    const startMinute = event.startDate[4] < 10 ? `0${event.startDate[4]}` : event.startDate[4];
+                                                    const endHour = event.endDate[3] < 10 ? `0${event.endDate[3]}` : event.endDate[3];
+                                                    const endMinute = event.endDate[4] < 10 ? `0${event.endDate[4]}` : event.endDate[4];
+                                                    const startTime = startHour + ':' + startMinute;
+                                                    const endTime = endHour + ':' + endMinute;
+                                                    const cursor = event.type === 'HOMEWORK' ? 'pointer' : 'auto'
+                                                    return (
+                                                        <div key={index} style={{ backgroundColor: color, padding: 5, borderRadius: 5, marginBlock: 5, cursor: cursor }}>
+                                                            <Typography variant='caption' fontWeight='bold'>{event.description}</Typography><br />
+                                                            <Typography variant='caption' fontStyle='italic'>{startTime} - {endTime} </Typography>
+                                                        </div>
+                                                    )
+                                                }
+                                            }
+                                            if (event.type === 'HOMEWORK' && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
+                                                // const color = event.status === 'PENDING' ? '#f28f6a' : event.status === 'DONE' ? "#099ce5" : "#fff952";
+                                                const color = event.status === 'PENDING' ? '#f28f6a' : event.status === 'DONE' ? "#42ae80" : "#ff0000";
                                                 return (
                                                     <div key={index} style={{ backgroundColor: color, padding: 5, borderRadius: 5, marginBlock: 5, cursor: 'pointer' }} onClick={() => handleEventClick(event)}>
-                                                        <Typography variant='caption' fontWeight='bold'>{event.description}</Typography><br />
-                                                        <Typography variant='caption' fontStyle='italic'>{startTime} - {endTime} </Typography>
+                                                        <Typography variant='caption' fontWeight='bold'>{event.description ? event.description : "Homework assignment given by file uploaded"}</Typography><br />
+                                                        <Typography variant='caption' fontStyle='italic'>{event.endDate[3] + ':' + event.endDate[4]} -</Typography>
+                                                        <Typography variant='caption' fontStyle='italic' fontWeight='bold'> {event.status}</Typography>
                                                     </div>
                                                 )
                                             }

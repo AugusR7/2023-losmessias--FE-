@@ -28,7 +28,6 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import useWindowSize from '@/hooks/useWindowSize';
-import Calendar from '@/components/Calendar';
 
 // Consts
 const dayNumber = {
@@ -55,7 +54,7 @@ export default function ProfessorLandingPage() {
     const [giveFeedback, setGiveFeedback] = useState(true);
     const [feedback, setFeedback] = useState({ rating: 0, time: false, material: false, kind: false });
     const [pendingFeedback, setPendingFeedback] = useState([]);
-    const [tab, setTab] = useState(2);
+    const [tab, setTab] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
     const [feedbackStatus, setFeedbackStatus] = useState('info');
@@ -63,7 +62,6 @@ export default function ProfessorLandingPage() {
     const [day, setDay] = useState(1);
     const windowSize = useWindowSize();
     const [nullFeedback, setNullFeedback] = useState(false);
-    const [events, setEvents] = useState([]);
 
     var curr = new Date();
     var first = curr.getDate() - curr.getDay();
@@ -127,14 +125,7 @@ export default function ProfessorLandingPage() {
                     });
                 }
             });
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/user/${user.id}?role=` + user.role.toUpperCase(), requestOptions)
-                .then(res => {
-                    if (res.ok) {
-                        res.json().then(json => {
-                            setEvents(json);
-                        });
-                    }
-                });
+            
         } else {
             router.push('/');
         }
@@ -341,7 +332,6 @@ export default function ProfessorLandingPage() {
                     <Tabs value={tab} onChange={handleTabChange}>
                         <Tab label='Agenda' />
                         <Tab label='Dashboard' />
-                        <Tab label='Calendar' />
                     </Tabs>
                     <div style={{ paddingBlock: '0.75rem' }} />
                     {tab === 0 && (
@@ -445,9 +435,6 @@ export default function ProfessorLandingPage() {
                         </>
                     )}
                     {tab === 1 && <Dashboard id={user.id} />}
-                    {tab === 2 &&
-                        <Calendar events={events} />
-                    }
 
                     {pendingFeedback.length > 0 && (
                         <Dialog open={giveFeedback} onClose={() => setGiveFeedback(false)}>

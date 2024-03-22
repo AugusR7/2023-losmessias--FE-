@@ -169,7 +169,7 @@ export default function Agenda({ selectedBlocks, setSelectedBlocks, disabledBloc
             let bubble = blockDate[0];
             blockDate[0] = blockDate[2];
             blockDate[2] = bubble;
-            console.log(blockDate)
+            // console.log(blockDate)
             if (blockDate[1].length === 1) blockDate[1] = '0' + blockDate[1];
             if (blockDate[2].length === 1) blockDate[2] = '0' + blockDate[2];
             // blockDate[2] = blockDate[1];

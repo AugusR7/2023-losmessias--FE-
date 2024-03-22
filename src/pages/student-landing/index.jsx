@@ -17,6 +17,7 @@ import {
     Alert,
     Tabs,
     Tab,
+    Grid,
 } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -41,10 +42,41 @@ export default function StudentLandingPage() {
     const [tab, setTab] = useState(1);
     const windowSize = useWindowSize();
     const [events, setEvents] = useState([]);
+    const [homeworkDetailsDialog, setHomeworkDetailsDialog] = useState(false);
+    const [homeworkDetails, setHomeworkDetails] = useState();
+    const [homeworkDeleteDialog, setHomeworkDeleteDialog] = useState(false);
     var router = useRouter();
+
+    const handleHomeworkClick = (event) => {
+        setHomeworkDetails(event);
+        setHomeworkDetailsDialog(true);
+    }
 
     const handleTabChange = (event, newValue) => {
         setTab(newValue);
+    };
+
+    const handleDownload = file => {
+        const requestOptions = {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${user.token}`,
+            },
+        };
+
+        fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/file/downloadFile?id=${file.id}`, requestOptions)
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(new Blob([blob]));
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => console.error('Error:', error));
     };
 
     useEffect(() => {
@@ -114,6 +146,7 @@ export default function StudentLandingPage() {
                         .then(response => {
                             if (response.ok) {
                                 return response.json().then(data => {
+                                    console.log(data)
                                     data.forEach(item => {
                                         const year = parseInt(item.deadline.split('-')[0]);
                                         const month = parseInt(item.deadline.split('-')[1]);
@@ -148,11 +181,12 @@ export default function StudentLandingPage() {
                                                         assignmentFile: item.assignmentFile,
                                                         response: item.response,
                                                         responseFile: item.responseFile,
-                                                        status: item.status
+                                                        status: item.status,
+                                                        classReservationId: item.classReservationId,
+                                                        professorId: item.professorId
                                                     }]
                                             else return prev
                                         });
-
                                     })
                                 });
                             }
@@ -164,15 +198,6 @@ export default function StudentLandingPage() {
                 .catch(error => {
                     console.error('There was an error!', error);
                 });
-            // {
-            //     id: 1,
-            //     title: 'Química',
-            //     description: 'Examen final',
-            //     startDate: [ 2024, 1, 1, 10, 0 ],
-            //     endDate: [ 2024, 1, 1, 10, 0 ],
-            //     userId: 3,
-            //     type: 'EXAM'
-            //   }
             setIsLoading(false);
         } else {
             router.push('/');
@@ -342,9 +367,83 @@ export default function StudentLandingPage() {
                         </>
                     )}
                     {tab === 1 && (
-                        <Calendar
-                            events={events}
-                        />
+                        <>
+                            <Dialog open={homeworkDetailsDialog} onClose={() => setHomeworkDetailsDialog(false)}>
+                                <DialogTitle>Homework Details</DialogTitle>
+                                <DialogContent>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12}>
+                                            <Typography variant='h6' fontWeight='bold'>Assignment</Typography>
+                                            <Typography>{homeworkDetails?.assignment ? homeworkDetails?.assignment : 'Assignment given by uploaded file'}</Typography>
+                                        </Grid>
+                                        {homeworkDetails?.assignmentFile && (
+                                            <>
+                                                <Grid item xs={12}>
+                                                    <Typography variant='h6' fontWeight='bold'>Assignment File</Typography>
+                                                    <Box sx={{ display: 'flex', flexDirection: 'row', marginTop: 1, alignItems: 'center' }}>
+                                                        <Typography variant='body2' fontSize={16}>{homeworkDetails?.assignmentFile.fileName}</Typography>
+                                                        <Button onClick={() => handleDownload(homeworkDetails.assignmentFile)} >
+                                                            <Typography variant='button'>Download Assignment</Typography>
+                                                        </Button>
+                                                    </Box>
+                                                </Grid>
+                                                <Divider orientation='horizontal' flexItem />
+                                            </>
+                                        )}
+                                        <Grid item xs={12}>
+                                            <Typography variant='h6' fontWeight='bold'>Deadline</Typography>
+                                            <Typography>
+                                                {homeworkDetails?.endDate[2] < 10 ? '0' + homeworkDetails?.endDate[2] : homeworkDetails?.endDate[2]}
+                                                -{homeworkDetails?.endDate[1] < 10 ? '0' + homeworkDetails?.endDate[1] : homeworkDetails?.endDate[1]}
+                                                -{homeworkDetails?.endDate[0]} {homeworkDetails?.endDate[3] < 10 ? '0' + homeworkDetails?.endDate[3] : homeworkDetails?.endDate[3]}
+                                                :{homeworkDetails?.endDate[4] < 10 ? '0' + homeworkDetails?.endDate[4] : homeworkDetails?.endDate[4]}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <Typography variant='h6' fontWeight='bold'>Status</Typography>
+                                            <Typography sx={{ color: homeworkDetails?.status === 'DONE' ? 'green' : homeworkDetails?.status === 'LATE' ? 'red' : 'orange', }} fontWeight='bold'>{homeworkDetails?.status}</Typography>
+                                        </Grid>
+                                        {homeworkDetails?.response && (
+                                            <Grid item xs={12}>
+                                                <Typography variant='h6' fontWeight='bold'>Response</Typography>
+                                                <Typography>{homeworkDetails?.response}</Typography>
+                                            </Grid>
+                                        )}
+                                        {homeworkDetails?.responseFile && (
+                                            <Grid item xs={12}>
+                                                <Typography variant='h6' fontWeight='bold'>Response File</Typography>
+                                                <Box sx={{ display: 'flex', flexDirection: 'row', marginTop: 1, alignItems: 'center' }}>
+                                                    <Typography variant='body2' fontSize={16}>{homeworkDetails?.responseFile.fileName}</Typography>
+                                                    <Button onClick={() => handleDownload(homeworkDetails.responseFile)} >
+                                                        <Typography variant='button'>Download Response</Typography>
+                                                    </Button>
+                                                </Box>
+                                            </Grid>
+                                        )}
+                                        <Grid item xs={12}>
+                                            <Typography fontStyle='italic' variant='caption' >
+                                                {homeworkDetails?.status === 'PENDING' ?
+                                                    'To respond to this homework, refer to the class below'
+                                                    : 'For more details regarding this homework, refer to the class below'
+                                                }
+                                            </Typography>
+                                        </Grid>
+                                    </Grid>
+                                </DialogContent>
+                                <DialogActions>
+                                    <Button
+                                        onClick={() => router.push(`/reservation/?id=${homeworkDetails?.classReservationId}&userId=${homeworkDetails?.professorId}`)}
+                                    >
+                                        Go to class
+                                    </Button>
+                                    <Button onClick={() => setHomeworkDetailsDialog(false)}>Close</Button>
+                                </DialogActions>
+                            </Dialog>
+                            <Calendar
+                                events={events}
+                                handleHomeworkClick={handleHomeworkClick}
+                            />
+                        </>
                     )}
 
                     {pendingFeedback.length > 0 && (

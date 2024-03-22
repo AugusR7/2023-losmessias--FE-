@@ -4,25 +4,8 @@ import { Button, Grid, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 
 
-export default function Calendar({ events }) {
+export default function Calendar({ events, handleHomeworkClick }) {
     // console.log(events)
-
-    const handleCellClick = (event, row, day) => {
-        // Do something...
-    }
-
-    const handleEventClick = (event) => {
-        // Do something...
-        console.log(event)
-    }
-
-    const handleEventsChange = (item) => {
-        // Do something...
-    }
-
-    const handleAlertCloseButtonClicked = (item) => {
-        // Do something...
-    }
 
     const WeekdayContainer = ({ children, style }) => {
         return (
@@ -125,7 +108,7 @@ export default function Calendar({ events }) {
                                                 // const color = event.status === 'PENDING' ? '#f28f6a' : event.status === 'DONE' ? "#099ce5" : "#fff952";
                                                 const color = event.status === 'PENDING' ? '#f28f6a' : event.status === 'DONE' ? "#42ae80" : "#ff0000";
                                                 return (
-                                                    <div key={index} style={{ backgroundColor: color, padding: 5, borderRadius: 5, marginBlock: 5, cursor: 'pointer' }} onClick={() => handleEventClick(event)}>
+                                                    <div key={index} style={{ backgroundColor: color, padding: 5, borderRadius: 5, marginBlock: 5, cursor: 'pointer' }} onClick={() => handleHomeworkClick(event)}>
                                                         <Typography variant='caption' fontWeight='bold'>{event.description ? event.description : "Homework assignment given by file uploaded"}</Typography><br />
                                                         <Typography variant='caption' fontStyle='italic'>{event.endDate[3] + ':' + event.endDate[4]} -</Typography>
                                                         <Typography variant='caption' fontStyle='italic' fontWeight='bold'> {event.status}</Typography>

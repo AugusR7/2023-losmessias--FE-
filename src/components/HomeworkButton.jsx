@@ -84,21 +84,17 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
                         setAlertMessage('Homework uploaded successfully!');
                         setAlertSeverity('success');
                         res.json().then(data => {
-                            console.log(data)
-                            setHomeWorks(prevHomeworks => {
-                                console.log(prevHomeworks)
-                                return [...prevHomeworks, {
-                                    id: data.id,
-                                    assignment: newMessage,
-                                    deadline: dateFormatter(date, time),
-                                    professorId: user.id,
-                                    classReservationId: parseInt(id),
-                                    status: 'PENDING',
-                                    responseFile: null,
-                                    response: null,
-                                    assignmentFile: data.assignmentFile
-                                }]
-                            });
+                            setHomeWorks(prevHomeworks => [...prevHomeworks, {
+                                id: data.id,
+                                assignment: newMessage,
+                                deadline: dateFormatter(date, time),
+                                professorId: user.id,
+                                classReservationId: parseInt(id),
+                                status: 'PENDING',
+                                responseFile: null,
+                                response: null,
+                                assignmentFile: data.assignmentFile
+                            }]);
                         });
 
                     } else {

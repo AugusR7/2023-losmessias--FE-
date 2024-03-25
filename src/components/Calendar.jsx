@@ -1,11 +1,11 @@
 import { useUser } from "@/context/UserContext";
 import useWindowSize from "@/hooks/useWindowSize";
-import { Button, Grid, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { Alert, Box, Button, CircularProgress, Grid, Snackbar, Typography } from "@mui/material";
+import { useState } from "react";
+import EventCreationDialog from "./modals/EventCreationDialog";
 
 
-export default function Calendar({ events, handleHomeworkClick }) {
-    // console.log(events)
+export default function Calendar({ events, handleHomeworkClick, setEvents }) {
 
     const WeekdayContainer = ({ children, style }) => {
         return (
@@ -33,19 +33,29 @@ export default function Calendar({ events, handleHomeworkClick }) {
         )
     }
 
+    const user = useUser();
     const windowSize = useWindowSize();
     const numDays = (y, m) => new Date(y, m, 0).getDate();
-    const year = new Date().toISOString().split('T')[0].split('-')[0];
-    const month = new Date().toISOString().split('T')[0].split('-')[1];
+    const [year, setYear] = useState(new Date().toISOString().split('T')[0].split('-')[0]);
+    const [month, setMonth] = useState(new Date().toISOString().split('T')[0].split('-')[1]);
     const numberOfDaysInMonth = numDays(year, month);
     const numberOfDaysInPreviousMonth = numDays(year, month - 1);
     const firstDayOfTheWeek = new Date(year, month - 1).getDay();
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const lastDaysOfPreviousMonth = Array.from({ length: firstDayOfTheWeek }, (_, i) => i + 1).map(day => day - 1).reverse();
     const lastDayOfTheMonth = new Date(year, month, 0).getDay();
-    // const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    // console.log(lastDayOfTheMonth)
-    // console.log(days[lastDayOfTheMonth])
+    const [alert, setAlert] = useState(false);
+    const [alertSeverity, setAlertSeverity] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
+
+    const [openCreationDialog, setOpenCreationDialog] = useState(false);
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+    const [startTime, setStartTime] = useState(new Date().toISOString().split('T')[1].split(':').slice(0, 2).join(':'));
+    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+    const [endTime, setEndTime] = useState(new Date().toISOString().split('T')[1].split(':').slice(0, 2).join(':'));
+    const [eventType, setEventType] = useState('EXAM');
 
     const verifyInclusion = (initialDate, finalDate, date) => {
         const initial = new Date(initialDate[0], initialDate[1], initialDate[2]);
@@ -54,20 +64,171 @@ export default function Calendar({ events, handleHomeworkClick }) {
         return current >= initial && current <= final;
     }
 
+    const handleDateChange = (event, endingDate = false) => {
+        if (event.target.value < new Date().toISOString().slice(0, 10)) {
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please select a date  begining from today (or in the future)")
+        } else if (endingDate && event.target.value < startDate) {
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please select a date greater than the starting date")
+        } else if (!endingDate && event.target.value > endDate) {
+            setEndDate(event.target.value);
+            setStartDate(event.target.value);
+        } else {
+            setAlert(false)
+            if (endingDate)
+                setEndDate(event.target.value);
+            else
+                setStartDate(event.target.value);
+        }
+    }
+
+    const handleTimeChange = (event, endingTime = false) => {
+        if (event.target.value < new Date().toISOString().slice(11, 16) && startDate < new Date().toISOString().split('T')[0]) {
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please select a time greater than the current time")
+        } else if (endingTime && startDate === endDate && event.target.value < startTime) {
+            // if it is the ending time, and the starting date is the same as the ending date, then the ending time must be greater than the starting time
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please select a time greater than the starting time")
+        } else if (!endingTime && startDate === endDate && event.target.value > endTime) {
+            // if it is the starting time, and the starting date is the same as the ending date, then the ending time must be the same as the new starting time
+            setStartTime(event.target.value)
+            setEndTime(event.target.value)
+        } else {
+            setAlert(false)
+            if (endingTime)
+                setEndTime(event.target.value);
+            else
+                setStartTime(event.target.value);
+        }
+    }
+
+    const handleCreateEvent = () => {
+        if (title === '' || description === '') {
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please fill in all the fields")
+        }
+        else {
+            var data = new FormData();
+            data.append('title', title)
+            data.append('description', description)
+            data.append('startTime', startDate + 'T' + startTime)
+            data.append('endTime', endDate + 'T' + endTime)
+            data.append('type', eventType)
+            data.append('userId', user.id)
+            setEvents(prevEvents => [...prevEvents, {
+                id: events.length + 1,
+                title: title,
+                description: description,
+                startDate: [parseInt(startDate.split('-')[0]), parseInt(startDate.split('-')[1]), parseInt(startDate.split('-')[2]), parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1])],
+                endDate: [parseInt(endDate.split('-')[0]), parseInt(endDate.split('-')[1]), parseInt(endDate.split('-')[2]), parseInt(endTime.split(':')[0]), parseInt(endTime.split(':')[1])],
+                type: eventType,
+                isLoading: true
+            }])
+
+            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/create`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${user.token}`,
+                },
+                body: data
+            })
+                .then(res => {
+                    if (res.status === 201) {
+                        setAlertMessage('Event created successfully!');
+                        setAlertSeverity('success');
+                        res.json().then(data => {
+                            setEvents(prevEvents => prevEvents.filter(event => !event.isLoading));
+                            setEvents(prevEvents => [...prevEvents, {
+                                id: events.length + 1,
+                                title: data.title,
+                                description: data.description,
+                                startDate: data.startDate,
+                                endDate: data.endDate,
+                                type: data.type
+                            }])
+                        })
+                    } else {
+                        setAlertMessage('An error occurred while creating the event');
+                        setAlertSeverity('error');
+                    }
+                })
+                .catch(err => {
+                    setAlert(true);
+                    setAlertMessage('An error occurred while creating the event');
+                    setAlertSeverity('error');
+                    console.log(err)
+                })
+            handleClose();
+        }
+    }
+
+    // const handlePaginationMobile = (direction) => {}
+
+    const handleClose = () => {
+        setOpenCreationDialog(false);
+        setStartDate(new Date().toISOString().split('T')[0]);
+        setStartTime(new Date().toISOString().split('T')[1].split(':').slice(0, 2).join(':'));
+        setEndDate(new Date().toISOString().split('T')[0]);
+        setEndTime(new Date().toISOString().split('T')[1].split(':').slice(0, 2).join(':'));
+        setTitle('');
+        setDescription('');
+        setEventType('EXAM');
+    }
+
     return (
         <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', marginBlock: 10, alignItems: 'center' }}>
+            <Snackbar open={alert} autoHideDuration={6000} onClose={() => setAlert(false)}>
+                <Alert onClose={() => setAlert(false)} severity={alertSeverity} sx={{ width: '100%' }}>
+                    {alertMessage}
+                </Alert>
+            </Snackbar>
+
             {windowSize.width > 500 && (
                 <>
                     <Grid container >
+                        <EventCreationDialog
+                            openCreationDialog={openCreationDialog}
+                            handleClose={handleClose}
+                            title={title}
+                            setTitle={setTitle}
+                            description={description}
+                            setDescription={setDescription}
+                            startDate={startDate}
+                            startTime={startTime}
+                            endDate={endDate}
+                            endTime={endTime}
+                            eventType={eventType}
+                            setEventType={setEventType}
+                            handleCreateEvent={handleCreateEvent}
+                            handleDateChange={handleDateChange}
+                            handleTimeChange={handleTimeChange}
+                        />
                         <Grid item xs={12} sx={{
                             border: '1px solid #e0e0e0',
                             borderTopLeftRadius: 10,
                             borderTopRightRadius: 10,
                             padding: 1,
+                            textAlign: 'center',
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between'
                         }}>
+                            <Button variant='outlined' disabled={month === 1} onClick={() => setMonth(prev => parseInt(prev) - 1)}>
+                                {'<'}
+                            </Button>
                             <Typography variant='h6' sx={{ textAlign: 'center' }}>
                                 {months[month - 1]} {year}
                             </Typography>
+                            <Button variant='outlined' onClick={() => setMonth(prev => parseInt(prev) + 1)}>
+                                {'>'}
+                            </Button>
                         </Grid>
                         <Grid container>
                             <WeekDays />
@@ -84,9 +245,8 @@ export default function Calendar({ events, handleHomeworkClick }) {
                                         <Typography>{day}</Typography>
                                         {events.map((event, index) => {
                                             const calendarDay = day < 10 ? `0${day}` : day;
-                                            // console.log(event)
-                                            const color = event.type === 'EXAM' ? '#f28f6a' : event.type === "PROJECT_PRESENTATION" ? "#099ce5" : "#fff952";
-                                            if (event.type !== 'HOMEWORK') {
+                                            const color = event.type === 'EXAM' ? '#f28f6a' : event.type === "PROJECT_PRESENTATION" ? "#0a9dff" : "#fff952";
+                                            if (event.type !== 'HOMEWORK' && !event.isLoading) {
                                                 verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])
                                                 if (verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
                                                     const startHour = event.startDate[3] < 10 ? `0${event.startDate[3]}` : event.startDate[3];
@@ -98,15 +258,19 @@ export default function Calendar({ events, handleHomeworkClick }) {
                                                     const cursor = event.type === 'HOMEWORK' ? 'pointer' : 'auto'
                                                     return (
                                                         <div key={index} style={{ backgroundColor: color, padding: 5, borderRadius: 5, marginBlock: 5, cursor: cursor }}>
-                                                            <Typography variant='caption' fontWeight='bold'>{event.description}</Typography><br />
-                                                            <Typography variant='caption' fontStyle='italic'>{startTime} - {endTime} </Typography>
+                                                            <Typography variant='caption' fontWeight='bold'>{event.title}</Typography><br />
+                                                            <Typography variant='caption'>{event.description}</Typography><br />
+                                                            {event.type !== "VACATION" ?
+                                                                <Typography variant='caption' fontStyle='italic'>{startTime} - {endTime} </Typography>
+                                                                :
+                                                                <Typography variant='caption' fontStyle='italic'>All day</Typography>
+                                                            }
                                                         </div>
                                                     )
                                                 }
                                             }
-                                            if (event.type === 'HOMEWORK' && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
-                                                // const color = event.status === 'PENDING' ? '#f28f6a' : event.status === 'DONE' ? "#099ce5" : "#fff952";
-                                                const color = event.status === 'PENDING' ? '#f28f6a' : event.status === 'DONE' ? "#42ae80" : "#ff0000";
+                                            if (event.type === 'HOMEWORK' && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay]) && !event.isLoading) {
+                                                const color = event.status === 'PENDING' ? '#ffd86f' : event.status === 'DONE' ? "#42ae80" : "#ff0000";
                                                 return (
                                                     <div key={index} style={{ backgroundColor: color, padding: 5, borderRadius: 5, marginBlock: 5, cursor: 'pointer' }} onClick={() => handleHomeworkClick(event)}>
                                                         <Typography variant='caption' fontWeight='bold'>{event.description ? event.description : "Homework assignment given by file uploaded"}</Typography><br />
@@ -114,6 +278,19 @@ export default function Calendar({ events, handleHomeworkClick }) {
                                                         <Typography variant='caption' fontStyle='italic' fontWeight='bold'> {event.status}</Typography>
                                                     </div>
                                                 )
+                                            }
+                                            if (event.isLoading && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
+                                                return (
+                                                    <div key={index} style={{ backgroundColor: '#191919', padding: 5, borderRadius: 5, marginBlock: 5 }}>
+                                                        <Box sx={{alignContent:'center', flexDirection:'row', display:'flex', justifyContent:'center'}}>
+                                                            <CircularProgress size={15} sx={{mr:1, color:'white'}} />
+                                                            <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>Creating event...</Typography>
+                                                        </Box>
+                                                        <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>{event.title} </Typography><br/>
+                                                        <Typography variant='caption' color='white' fontStyle='italic'>{event.description}</Typography> <br/>
+                                                        <Typography variant='caption' color='white' fontStyle='italic'>{event.startDate[3] + ':' + event.startDate[4]} - {event.endDate[3] + ':' + event.endDate[4]}</Typography>
+                                                    </div>
+                                                );
                                             }
                                         })}
                                         {(!event_on_this_day) &&
@@ -133,7 +310,7 @@ export default function Calendar({ events, handleHomeworkClick }) {
                                 )
                             })}
                         </Grid>
-
+                        <Button variant='contained' onClick={() => setOpenCreationDialog(true)} sx={{ marginTop: 3 }}>Create Event</Button>
                     </Grid>
                 </>
             )

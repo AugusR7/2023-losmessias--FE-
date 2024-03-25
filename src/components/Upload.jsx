@@ -67,7 +67,6 @@ export default function Upload({ id, setFiles, setComments, setUploadingFileName
                         setFiles(prevFiles => [...prevFiles, { fileName: file.name, role: user.role }]);
                         return res.json();
                     } else {
-                        console.log(res.status);
                         setAlertSeverity('error');
                         setAlertMessage('There was an error uploading the file!');
                     }

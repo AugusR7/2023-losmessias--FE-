@@ -307,7 +307,7 @@ export default function StudentLandingPage() {
                     )}
                     <Tabs value={tab} onChange={handleTabChange} >
                         <Tab label="Agenda" />
-                        <Tab label="Feedback" />
+                        <Tab label="Calendar" />
                     </Tabs>
                     <Divider />
                     {tab === 0 && (
@@ -442,6 +442,7 @@ export default function StudentLandingPage() {
                             <Calendar
                                 events={events}
                                 handleHomeworkClick={handleHomeworkClick}
+                                setEvents={setEvents}
                             />
                         </>
                     )}

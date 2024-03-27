@@ -68,67 +68,68 @@ export default function ProfessorLandingPage() {
 
     useEffect(() => {
         setIsLoading(true);
-        if (user.id) {
-            if (user.role == 'student') router.push('/student-landing');
-            if (user.role === 'admin') router.push('/admin-landing');
-            const requestOptions = {
-                method: 'GET',
-                headers: { Authorization: `Bearer ${user.token}` },
-            };
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/findByProfessor?professorId=${user.id}`, requestOptions).then(res => {
-                if (res.status === 200) {
-                    res.json().then(json => {
-                        setDisabledBlocks(
-                            json.map(e => {
-                                if (e.day[1] < 10) e.day[1] = '0' + e.day[1];
-                                if (e.day[2] < 10) e.day[2] = '0' + e.day[2];
-                                if (e.startingHour[0] < 10) e.startingHour[0] = '0' + e.startingHour[0];
-                                if (e.startingHour[1] < 10) e.startingHour[1] = '0' + e.startingHour[1];
-                                if (e.endingHour[0] < 10) e.endingHour[0] = '0' + e.endingHour[0];
-                                if (e.endingHour[1] < 10) e.endingHour[1] = '0' + e.endingHour[1];
-                                return e;
-                            })
-                        );
-                    });
-                }
-                setIsLoading(false);
-            });
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/professor/${user.id}`, requestOptions).then(res => {
-                if (res.status === 200) {
-                    return res.json().then(json => {
-                        json.pendingClassesFeedbacks.map(reservation => {
-                            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/${reservation}`, requestOptions).then(res2 => {
-                                res2.json().then(json2 => {
-                                    setPendingFeedback(prev => {
-                                        let exists = false;
-                                        prev.forEach(pfed => {
-                                            if (pfed.reservation_id === reservation) exists = true;
-                                        });
+        if (router.isReady)
+            if (user.id) {
+                if (user.role == 'student') router.push('/student-landing');
+                if (user.role === 'admin') router.push('/admin-landing');
+                const requestOptions = {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${user.token}` },
+                };
+                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/findByProfessor?professorId=${user.id}`, requestOptions).then(res => {
+                    if (res.status === 200) {
+                        res.json().then(json => {
+                            setDisabledBlocks(
+                                json.map(e => {
+                                    if (e.day[1] < 10) e.day[1] = '0' + e.day[1];
+                                    if (e.day[2] < 10) e.day[2] = '0' + e.day[2];
+                                    if (e.startingHour[0] < 10) e.startingHour[0] = '0' + e.startingHour[0];
+                                    if (e.startingHour[1] < 10) e.startingHour[1] = '0' + e.startingHour[1];
+                                    if (e.endingHour[0] < 10) e.endingHour[0] = '0' + e.endingHour[0];
+                                    if (e.endingHour[1] < 10) e.endingHour[1] = '0' + e.endingHour[1];
+                                    return e;
+                                })
+                            );
+                        });
+                    }
+                    setIsLoading(false);
+                });
+                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/professor/${user.id}`, requestOptions).then(res => {
+                    if (res.status === 200) {
+                        return res.json().then(json => {
+                            json.pendingClassesFeedbacks.map(reservation => {
+                                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/${reservation}`, requestOptions).then(res2 => {
+                                    res2.json().then(json2 => {
+                                        setPendingFeedback(prev => {
+                                            let exists = false;
+                                            prev.forEach(pfed => {
+                                                if (pfed.reservation_id === reservation) exists = true;
+                                            });
 
-                                        if (!exists)
-                                            return [
-                                                ...prev,
-                                                {
-                                                    reservation_id: reservation,
-                                                    receiver: {
-                                                        id: json2.student.id,
-                                                        name: `${json2.student.firstName} ${json2.student.lastName}`,
+                                            if (!exists)
+                                                return [
+                                                    ...prev,
+                                                    {
+                                                        reservation_id: reservation,
+                                                        receiver: {
+                                                            id: json2.student.id,
+                                                            name: `${json2.student.firstName} ${json2.student.lastName}`,
+                                                        },
                                                     },
-                                                },
-                                            ];
-                                        else return prev;
+                                                ];
+                                            else return prev;
+                                        });
                                     });
                                 });
+                                setGiveFeedback(true);
                             });
-                            setGiveFeedback(true);
                         });
-                    });
-                }
-            });
-            
-        } else {
-            router.push('/');
-        }
+                    }
+                });
+
+            } else {
+                router.push('/');
+            }
     }, [router, user]);
 
     const handleCancel = () => {

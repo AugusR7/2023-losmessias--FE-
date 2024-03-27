@@ -8,6 +8,7 @@ import EventDeletionDialog from "./modals/EventDeletionDialog";
 
 
 export default function Calendar({ events, handleHomeworkClick, setEvents }) {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
     const WeekdayContainer = ({ children, style }) => {
         return (
@@ -23,7 +24,6 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
     }
 
     const WeekDays = () => {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
         return (
             <Grid container>
                 {days.map((day, index) => (
@@ -40,6 +40,7 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
     const numDays = (y, m) => new Date(y, m, 0).getDate();
     const [year, setYear] = useState(new Date().toISOString().split('T')[0].split('-')[0]);
     const [month, setMonth] = useState(new Date().toISOString().split('T')[0].split('-')[1]);
+    const [day, setDay] = useState(new Date().toISOString().split('T')[0].split('-')[2]);
     const numberOfDaysInMonth = numDays(year, month);
     const numberOfDaysInPreviousMonth = numDays(year, month - 1);
     const firstDayOfTheWeek = new Date(year, month - 1).getDay();
@@ -205,7 +206,23 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
         setDeleteDialog(false);
     }
 
-    // const handlePaginationMobile = (direction) => {}
+    const handlePaginationMobile = (direction) => {
+        if (direction === 'left') {
+            if (day === 1) {
+                setMonth(prev => parseInt(prev) - 1);
+                setDay(numDays(year, month - 1));
+            } else {
+                setDay(prev => parseInt(prev) - 1);
+            }
+        } else {
+            if (day === numberOfDaysInMonth) {
+                setMonth(prev => parseInt(prev) + 1);
+                setDay(1);
+            } else {
+                setDay(prev => parseInt(prev) + 1);
+            }
+        }
+    }
 
     const handleClose = () => {
         setOpenCreationDialog(false);
@@ -384,17 +401,182 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                 </>
             )
             }
-            {/* {windowSize.width <= 500 && (
+
+            {windowSize.width <= 500 && (
                 <>
-                    <Button variant='outlined' disabled={week === 0 && day === 1} onClick={() => handlePaginationMobile('left')}>
-                        {'<'}
-                    </Button>
-                    <Typography>{new Date(aux_date.setDate(first + day + 7 * week)).toISOString().split('T')[0]}</Typography>
-                    <Button variant='outlined' onClick={() => handlePaginationMobile('right')}>
-                        {'>'}
-                    </Button>
+                    <Grid container >
+                        <EventCreationDialog
+                            openCreationDialog={openCreationDialog}
+                            handleClose={handleClose}
+                            title={title}
+                            setTitle={setTitle}
+                            description={description}
+                            setDescription={setDescription}
+                            startDate={startDate}
+                            startTime={startTime}
+                            endDate={endDate}
+                            endTime={endTime}
+                            eventType={eventType}
+                            setEventType={setEventType}
+                            handleCreateEvent={handleCreateEvent}
+                            handleDateChange={handleDateChange}
+                            handleTimeChange={handleTimeChange}
+                        />
+                        <EventDeletionDialog
+                            open={deleteDialog}
+                            eventId={eventToDelete}
+                            handleClose={handleCloseDialog}
+                            handleDelete={handleDeleteEvent}
+                        />
+                        <Grid item xs={12} sx={{
+                            border: '1px solid #e0e0e0',
+                            borderTopLeftRadius: 10,
+                            borderTopRightRadius: 10,
+                            padding: 1,
+                            textAlign: 'center',
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between'
+                        }}>
+                            <Button variant='outlined' disabled={month === 1} onClick={() => handlePaginationMobile('left')}>
+                                {'<'}
+                            </Button>
+                            <Typography variant='h6' sx={{ textAlign: 'center' }}>
+                                {new Date(year, month - 1).toLocaleString('en-GB', { month: 'long' })} {day}, {year}
+                            </Typography>
+                            <Button variant='outlined' onClick={() => handlePaginationMobile('right')}>
+                                {'>'}
+                            </Button>
+                        </Grid>
+                        <Grid container>
+                            <Grid item xs={12} sx={{
+                                border: '1px solid #e0e0e0',
+                                padding: 1,
+                                textAlign: 'center',
+                                borderBottomLeftRadius: 10,
+                                borderBottomRightRadius: 10
+                            }}>
+                                <Typography variant='h6'>{days[new Date(year, month - 1, day).getDay()]}</Typography>
+                            </Grid>
+                            {events.map((event, index) => {
+                                const calendarDay = day < 10 ? `0${day}` : day;
+                                const color = event.type === 'EXAM' ? '#f28f6a' : event.type === "PROJECT_PRESENTATION" ? "#0a9dff" : "#fff952";
+                                if (event.type !== 'HOMEWORK' && !event.isLoading) {
+                                    verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])
+                                    if (verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
+                                        const startHour = event.startDate[3] < 10 ? `0${event.startDate[3]}` : event.startDate[3];
+                                        const startMinute = event.startDate[4] < 10 ? `0${event.startDate[4]}` : event.startDate[4];
+                                        const endHour = event.endDate[3] < 10 ? `0${event.endDate[3]}` : event.endDate[3];
+                                        const endMinute = event.endDate[4] < 10 ? `0${event.endDate[4]}` : event.endDate[4];
+                                        const startTime = startHour + ':' + startMinute;
+                                        const endTime = endHour + ':' + endMinute;
+                                        const cursor = event.type === 'HOMEWORK' ? 'pointer' : 'auto'
+                                        return (
+                                            <Grid item
+                                                xs={12}
+                                                key={index}
+                                                sx={{
+                                                    backgroundColor: color,
+                                                    padding: 1,
+                                                    borderRadius: 2,
+                                                    marginBlock: 2,
+                                                    cursor: cursor,
+                                                }}
+                                            >
+                                                <Box sx={{ position: 'relative', textAlign: 'center' }}>
+                                                    <Typography variant='h6' fontWeight='bold'>{event.title}</Typography>
+                                                    <Button
+                                                        variant='contained'
+                                                        onClick={() => {
+                                                            setEventToDelete(event.id);
+                                                            setDeleteDialog(true);
+                                                        }}
+                                                        sx={{
+                                                            marginLeft: 1,
+                                                            padding: 0,
+                                                            minWidth: 0,
+                                                            minHeight: 0,
+                                                            borderRadius: 0,
+                                                            borderRadius: 15,
+                                                            backgroundColor: 'red',
+                                                            position: 'absolute',
+                                                            top: 0,
+                                                            right: 0,
+                                                            ":hover": {
+                                                                backgroundColor: '#a40000',
+                                                            }
+                                                        }}
+                                                    >
+                                                        <CloseIcon fontSize='small' />
+                                                    </Button>
+                                                    <br />
+                                                </Box>
+                                                <Box sx={{ textAlign: 'center' }}>
+                                                    <Typography sx={{ justifyContent: 'center' }}>{event.description}</Typography><br />
+                                                    {event.type !== "VACATION" ?
+                                                        <Typography fontStyle='italic'>{startTime} - {endTime} </Typography>
+                                                        :
+                                                        <Typography fontStyle='italic'>All day</Typography>
+                                                    }
+                                                </Box>
+                                            </Grid>
+                                        )
+                                    }
+                                }
+                                if (event.type === 'HOMEWORK' && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay]) && !event.isLoading) {
+                                    const color = event.status === 'PENDING' ? '#ffd86f' : event.status === 'DONE' ? "#42ae80" : "#ff0000";
+                                    return (
+                                        <Grid item xs={12} key={index} sx={{
+                                            backgroundColor: color,
+                                            padding: 1,
+                                            borderRadius: 2,
+                                            marginBlock: 2,
+                                            cursor: 'pointer',
+                                            textAlign: 'center'
+                                        }} onClick={() => handleHomeworkClick(event)}>
+                                            <Typography fontWeight='bold' sx={{ paddingRight: 2, paddingLeft: 2 }}>{event.description ? event.description : "Homework assignment given by file uploaded"}</Typography><br />
+                                            <Typography fontStyle='italic'>{event.endDate[3] + ':' + event.endDate[4]}</Typography>
+                                            <Typography fontStyle='italic' fontWeight='bold'> {event.status}</Typography>
+                                        </Grid>
+                                    )
+                                }
+                                if (event.isLoading && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
+                                    return (
+                                        <Grid item xs={12} key={index} sx={{
+                                            backgroundColor: '#191919',
+                                            padding: 1,
+                                            borderRadius: 2,
+                                            marginBlock: 2,
+                                            cursor: 'pointer',
+                                        }}>
+                                            <Box sx={{ alignContent: 'center', flexDirection: 'row', display: 'flex', justifyContent: 'center' }}>
+                                                <CircularProgress size={15} sx={{ mr: 1, color: 'white' }} />
+                                                <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>Creating event...</Typography>
+                                            </Box>
+                                            <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>{event.title} </Typography><br />
+                                            <Typography variant='caption' color='white' fontStyle='italic'>{event.description}</Typography> <br />
+                                            <Typography variant='caption' color='white' fontStyle='italic'>{event.startDate[3] + ':' + event.startDate[4]} - {event.endDate[3] + ':' + event.endDate[4]}</Typography>
+                                        </Grid>
+                                    );
+                                }
+                            }
+                            )}
+                            {!events.find(event => verifyInclusion(event.startDate, event.endDate, [year, month, day])) && (
+                                <Grid item xs={12} sx={{
+                                    backgroundColor: 'gray',
+                                    padding: 1,
+                                    borderRadius: 2,
+                                    marginBlock: 2,
+                                    textAlign: 'center'
+                                }}>
+                                    <Typography color='white' fontWeight='bold' fontStyle='italic'>No events on this day</Typography>
+                                </Grid>
+                            )}
+                            <Button variant='contained' onClick={() => setOpenCreationDialog(true)} sx={{ marginTop: 3 }}>Create Event</Button>
+                        </Grid>
+                    </Grid>
                 </>
-            )} */}
+            )}
         </div >
     )
 }

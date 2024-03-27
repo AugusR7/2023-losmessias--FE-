@@ -49,7 +49,7 @@ export default function EventCreationDialog({
                             defaultValue={startDate}
                             value={startDate}
                             onChange={(event) => handleDateChange(event)}
-                            sx={{ width: 220 }}
+                            sx={{ width: window.innerWidth > 500 ? 220 : 150}}
                             InputLabelProps={{
                                 shrink: true,
                             }}
@@ -79,7 +79,7 @@ export default function EventCreationDialog({
                             defaultValue={endDate}
                             value={endDate}
                             onChange={(event) => handleDateChange(event, true)}
-                            sx={{ width: 220 }}
+                            sx={{ width: window.innerWidth > 500 ? 220 : 150 }}
                             InputLabelProps={{
                                 shrink: true,
                             }}

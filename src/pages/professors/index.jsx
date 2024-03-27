@@ -54,13 +54,12 @@ export default function Professors() {
         fallbackData: [],
     });
 
-    useEffect(() => {
-        setProfessors(data);
-    }, [data]);
+
 
     useEffect(() => {
-        if (router.isReady && user) {
-            if (user.authenticated) {
+        if (router.isReady) {
+            console.log(user)
+            if (user.id) {
                 if (user.role == 'professor') router.push('/professor-landing');
                 if (user.role === 'admin') router.push('/admin-landing');
                 const requestOptions = {
@@ -100,7 +99,12 @@ export default function Professors() {
                 router.push('/');
             }
         }
+
     }, [user, router]);
+
+    useEffect(() => {
+        setProfessors(data);
+    }, [data]);
 
     const handleFilter = () => {
         if (locationSelected.length > 0 && subjectSelected.length === 0) {

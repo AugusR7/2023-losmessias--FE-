@@ -1,6 +1,6 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, TextField, Typography, styled } from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFileChange, date, handleDateChange, time, handleTimeChange, handleSave, handleClose, isProfessor }) {
+export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFileChange, date, handleDateChange, time, handleTimeChange, handleSave, handleClose, isProfessor, mobile }) {
 
     const VisuallyHiddenInput = styled('input')({
         clip: 'rect(0 0 0 0)',
@@ -13,13 +13,12 @@ export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFi
         whiteSpace: 'nowrap',
         width: 1,
     });
-
     return (
         <Dialog open={open} onClose={handleClose} fullWidth>
             <DialogTitle>{isProfessor ? "Add Homework" : "Complete Homework"}</DialogTitle>
-            <DialogContent dividers sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', flexDirection: 'row', paddingBottom: '1rem', alignItems: 'center' }}>
-                    <div style={{ paddingInline: '2rem' }}>
+            <DialogContent dividers sx={{ display: 'flex', alignItems: 'center', flexDirection: mobile ? 'row' : 'column' }}>
+                <div style={{ display: 'flex', flexDirection: !mobile ? 'row' : 'column', paddingBottom: '1rem', alignItems: 'center' }}>
+                    <div style={{ paddingInline: '2rem', marginBottom: mobile ? 20 : 0 }}>
                         <TextField
                             multiline
                             rows={3}
@@ -31,8 +30,8 @@ export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFi
                             }}
                         />
                     </div>
-                    <Divider orientation='vertical' flexItem />
-                    <div style={{ paddingInline: '2rem' }}>
+                    <Divider orientation={mobile ? 'horizontal' : 'vertical'} flexItem />
+                    <div style={{ paddingInline: '2rem', marginTop: mobile ? 20 : 0 }}>
                         <Button component='label' variant='contained' startIcon={<CloudUploadIcon />}>
                             Upload file
                             <VisuallyHiddenInput
@@ -41,7 +40,7 @@ export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFi
                                 onChange={handleFileChange}
                             />
                         </Button>
-                        <Typography>{file?.name}</Typography>
+                        <Typography sx={{ textAlign: mobile ? 'center' : null, marginTop: mobile ? 2 : 0 }}>{file?.name}</Typography>
                     </div>
                 </div>
                 {isProfessor && (

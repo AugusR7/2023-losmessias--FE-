@@ -39,12 +39,11 @@ export default function StudentLandingPage() {
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
     const [feedbackStatus, setFeedbackStatus] = useState('info');
     const [autoHideDuration, setAutoHideDuration] = useState(null);
-    const [tab, setTab] = useState(1);
+    const [tab, setTab] = useState(0);
     const windowSize = useWindowSize();
     const [events, setEvents] = useState([]);
     const [homeworkDetailsDialog, setHomeworkDetailsDialog] = useState(false);
     const [homeworkDetails, setHomeworkDetails] = useState();
-    const [homeworkDeleteDialog, setHomeworkDeleteDialog] = useState(false);
     var router = useRouter();
 
     const handleHomeworkClick = (event) => {
@@ -81,125 +80,127 @@ export default function StudentLandingPage() {
 
     useEffect(() => {
         setIsLoading(true);
-        if (user.id && router.isReady) {
-            if (user.role == 'professor') router.push('/professor-landing');
-            if (user.role === 'admin') router.push('/admin-landing');
-            const requestOptions = {
-                method: 'GET',
-                headers: { Authorization: `Bearer ${user.token}` },
-            };
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/findByStudent?studentId=${user.id}`, requestOptions).then(res => {
-                res.json().then(json => {
-                    setDisabledBlocks(
-                        json.map(e => {
-                            if (e.day[1] < 10) e.day[1] = '0' + e.day[1];
-                            if (e.day[2] < 10) e.day[2] = '0' + e.day[2];
-                            if (e.startingHour[0] < 10) e.startingHour[0] = '0' + e.startingHour[0];
-                            if (e.startingHour[1] < 10) e.startingHour[1] = '0' + e.startingHour[1];
-                            if (e.endingHour[0] < 10) e.endingHour[0] = '0' + e.endingHour[0];
-                            if (e.endingHour[1] < 10) e.endingHour[1] = '0' + e.endingHour[1];
-                            return e;
-                        })
-                    );
-                });
-            });
-
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/student/${user.id}`, requestOptions).then(res => {
-                res.json().then(json => {
-                    json.pendingClassesFeedbacks.map(reservation => {
-                        fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/${reservation}`, requestOptions).then(res2 => {
-                            res2.json().then(json2 => {
-                                setPendingFeedback(prev => {
-                                    let exists = false;
-                                    prev.forEach(pfed => {
-                                        if (pfed.reservation_id === reservation) exists = true;
-                                    });
-                                    if (!exists)
-                                        return [
-                                            ...prev,
-                                            {
-                                                reservation_id: reservation,
-                                                receiver: {
-                                                    id: json2.professor.id,
-                                                    name: `${json2.professor.firstName} ${json2.professor.lastName}`,
-                                                },
-                                            },
-                                        ];
-                                    else return prev;
-                                });
-                            });
-                        });
-                        setGiveFeedback(true);
+        if (router.isReady) {
+            if (user.id) {
+                if (user.role == 'professor') router.push('/professor-landing');
+                if (user.role === 'admin') router.push('/admin-landing');
+                const requestOptions = {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${user.token}` },
+                };
+                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/findByStudent?studentId=${user.id}`, requestOptions).then(res => {
+                    res.json().then(json => {
+                        setDisabledBlocks(
+                            json.map(e => {
+                                if (e.day[1] < 10) e.day[1] = '0' + e.day[1];
+                                if (e.day[2] < 10) e.day[2] = '0' + e.day[2];
+                                if (e.startingHour[0] < 10) e.startingHour[0] = '0' + e.startingHour[0];
+                                if (e.startingHour[1] < 10) e.startingHour[1] = '0' + e.startingHour[1];
+                                if (e.endingHour[0] < 10) e.endingHour[0] = '0' + e.endingHour[0];
+                                if (e.endingHour[1] < 10) e.endingHour[1] = '0' + e.endingHour[1];
+                                return e;
+                            })
+                        );
                     });
                 });
-            });
 
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/user/${user.id}`, requestOptions)
-                .then(response => {
-                    if (response.ok) {
-                        return response.json().then(data => {
-                            setEvents(data)
-                        });
-                    }
-                }).then(() => {
-                    fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/homework/getByStudent/${user.id}`, requestOptions)
-                        .then(response => {
-                            if (response.ok) {
-                                return response.json().then(data => {
-                                    data.forEach(item => {
-                                        const year = parseInt(item.deadline.split('-')[0]);
-                                        const month = parseInt(item.deadline.split('-')[1]);
-                                        const day = parseInt(item.deadline.split('-')[2]);
-                                        const hour = parseInt(item.deadline.split('T')[1].split(':')[0]);
-                                        const minute = parseInt(item.deadline.split('T')[1].split(':')[1]);
-                                        item.deadline = [year, month, day, hour, minute];
-                                        setEvents(prev => {
-                                            const coincidencias = prev.find(e => {
-                                                if (e.type === 'HOMEWORK') {
-                                                    if (e.endDate[0] == item.deadline[0]
-                                                        && e.endDate[1] == item.deadline[1]
-                                                        && e.endDate[2] == item.deadline[2]
-                                                        && e.endDate[3] == item.deadline[3]
-                                                        && e.endDate[4] == item.deadline[4]
-                                                        && e.response === item.response
-                                                        && e.assignment === item.assignment)
-                                                        return e
-                                                }
-                                            })
-                                            if (!coincidencias)
-                                                return [
-                                                    ...prev, {
-                                                        // id: prev.length + 1,
-                                                        title: 'Homework',
-                                                        description: item.assignment,
-                                                        endDate: item.deadline,
-                                                        startDate: item.deadline,
-                                                        userId: item.studentId,
-                                                        type: 'HOMEWORK',
-                                                        assignment: item.assignment,
-                                                        assignmentFile: item.assignmentFile,
-                                                        response: item.response,
-                                                        responseFile: item.responseFile,
-                                                        status: item.status,
-                                                        classReservationId: item.classReservationId,
-                                                        professorId: item.professorId
-                                                    }]
-                                            else return prev
+                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/student/${user.id}`, requestOptions).then(res => {
+                    res.json().then(json => {
+                        json.pendingClassesFeedbacks.map(reservation => {
+                            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/${reservation}`, requestOptions).then(res2 => {
+                                res2.json().then(json2 => {
+                                    setPendingFeedback(prev => {
+                                        let exists = false;
+                                        prev.forEach(pfed => {
+                                            if (pfed.reservation_id === reservation) exists = true;
                                         });
-                                    })
+                                        if (!exists)
+                                            return [
+                                                ...prev,
+                                                {
+                                                    reservation_id: reservation,
+                                                    receiver: {
+                                                        id: json2.professor.id,
+                                                        name: `${json2.professor.firstName} ${json2.professor.lastName}`,
+                                                    },
+                                                },
+                                            ];
+                                        else return prev;
+                                    });
                                 });
-                            }
-                        })
-                        .catch(error => {
-                            console.error('There was an error fetching homeworks!', error);
+                            });
+                            setGiveFeedback(true);
                         });
-                })
-                .catch(error => {
-                    console.error('There was an error!', error);
+                    });
                 });
-            setIsLoading(false);
-        } else {
-            router.push('/');
+
+                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/user/${user.id}`, requestOptions)
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json().then(data => {
+                                setEvents(data)
+                            });
+                        }
+                    }).then(() => {
+                        fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/homework/getByStudent/${user.id}`, requestOptions)
+                            .then(response => {
+                                if (response.ok) {
+                                    return response.json().then(data => {
+                                        data.forEach(item => {
+                                            const year = parseInt(item.deadline.split('-')[0]);
+                                            const month = parseInt(item.deadline.split('-')[1]);
+                                            const day = parseInt(item.deadline.split('-')[2]);
+                                            const hour = parseInt(item.deadline.split('T')[1].split(':')[0]);
+                                            const minute = parseInt(item.deadline.split('T')[1].split(':')[1]);
+                                            item.deadline = [year, month, day, hour, minute];
+                                            setEvents(prev => {
+                                                const coincidencias = prev.find(e => {
+                                                    if (e.type === 'HOMEWORK') {
+                                                        if (e.endDate[0] == item.deadline[0]
+                                                            && e.endDate[1] == item.deadline[1]
+                                                            && e.endDate[2] == item.deadline[2]
+                                                            && e.endDate[3] == item.deadline[3]
+                                                            && e.endDate[4] == item.deadline[4]
+                                                            && e.response === item.response
+                                                            && e.assignment === item.assignment)
+                                                            return e
+                                                    }
+                                                })
+                                                if (!coincidencias)
+                                                    return [
+                                                        ...prev, {
+                                                            // id: prev.length + 1,
+                                                            title: 'Homework',
+                                                            description: item.assignment,
+                                                            endDate: item.deadline,
+                                                            startDate: item.deadline,
+                                                            userId: item.studentId,
+                                                            type: 'HOMEWORK',
+                                                            assignment: item.assignment,
+                                                            assignmentFile: item.assignmentFile,
+                                                            response: item.response,
+                                                            responseFile: item.responseFile,
+                                                            status: item.status,
+                                                            classReservationId: item.classReservationId,
+                                                            professorId: item.professorId
+                                                        }]
+                                                else return prev
+                                            });
+                                        })
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                console.error('There was an error fetching homeworks!', error);
+                            });
+                    })
+                    .catch(error => {
+                        console.error('There was an error!', error);
+                    });
+                setIsLoading(false);
+            } else {
+                router.push('/');
+            }
         }
     }, [user, router]);
 

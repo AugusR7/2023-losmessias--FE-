@@ -3,6 +3,8 @@ import useWindowSize from "@/hooks/useWindowSize";
 import { Alert, Box, Button, CircularProgress, Grid, Snackbar, Typography } from "@mui/material";
 import { useState } from "react";
 import EventCreationDialog from "./modals/EventCreationDialog";
+import CloseIcon from '@mui/icons-material/Close';
+import EventDeletionDialog from "./modals/EventDeletionDialog";
 
 
 export default function Calendar({ events, handleHomeworkClick, setEvents }) {
@@ -47,6 +49,8 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
     const [alert, setAlert] = useState(false);
     const [alertSeverity, setAlertSeverity] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
+    const [deleteDialog, setDeleteDialog] = useState(false);
+    const [eventToDelete, setEventToDelete] = useState();
 
     const [openCreationDialog, setOpenCreationDialog] = useState(false);
     const [title, setTitle] = useState('');
@@ -144,9 +148,10 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                         setAlertMessage('Event created successfully!');
                         setAlertSeverity('success');
                         res.json().then(data => {
+                            console.log(data)
                             setEvents(prevEvents => prevEvents.filter(event => !event.isLoading));
                             setEvents(prevEvents => [...prevEvents, {
-                                id: events.length + 1,
+                                id: data.id,
                                 title: data.title,
                                 description: data.description,
                                 startDate: data.startDate,
@@ -167,6 +172,37 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                 })
             handleClose();
         }
+    }
+
+    const handleDeleteEvent = (id) => {
+        fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/delete/${id}`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${user.token}`
+            }
+        })
+            .then(res => {
+                if (res.status === 200) {
+                    setAlert(true);
+                    setAlertMessage('Event deleted successfully!');
+                    setAlertSeverity('success');
+                    setEvents(prevEvents => prevEvents.filter(event => event.id !== id));
+                } else {
+                    setAlertMessage('An error occurred while deleting the event');
+                    setAlertSeverity('error');
+                }
+            })
+            .catch(err => {
+                setAlertMessage('An error occurred while deleting the event');
+                setAlertSeverity('error');
+                console.log(err)
+            }).finally(() => {
+                setDeleteDialog(false);
+            })
+    }
+
+    const handleCloseDialog = () => {
+        setDeleteDialog(false);
     }
 
     // const handlePaginationMobile = (direction) => {}
@@ -209,6 +245,12 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                             handleCreateEvent={handleCreateEvent}
                             handleDateChange={handleDateChange}
                             handleTimeChange={handleTimeChange}
+                        />
+                        <EventDeletionDialog
+                            open={deleteDialog}
+                            eventId={eventToDelete}
+                            handleClose={handleCloseDialog}
+                            handleDelete={handleDeleteEvent}
                         />
                         <Grid item xs={12} sx={{
                             border: '1px solid #e0e0e0',
@@ -258,7 +300,34 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                                                     const cursor = event.type === 'HOMEWORK' ? 'pointer' : 'auto'
                                                     return (
                                                         <div key={index} style={{ backgroundColor: color, padding: 5, borderRadius: 5, marginBlock: 5, cursor: cursor }}>
-                                                            <Typography variant='caption' fontWeight='bold'>{event.title}</Typography><br />
+                                                            <Box sx={{ position: 'relative' }}>
+                                                                <Typography variant='caption' fontWeight='bold'>{event.title}</Typography>
+                                                                <Button
+                                                                    variant='contained'
+                                                                    onClick={() => {
+                                                                        setEventToDelete(event.id);
+                                                                        setDeleteDialog(true);
+                                                                    }}
+                                                                    sx={{
+                                                                        marginLeft: 1,
+                                                                        padding: 0,
+                                                                        minWidth: 0,
+                                                                        minHeight: 0,
+                                                                        borderRadius: 0,
+                                                                        borderRadius: 15,
+                                                                        backgroundColor: 'red',
+                                                                        position: 'absolute',
+                                                                        top: 0,
+                                                                        right: 0,
+                                                                        ":hover": {
+                                                                            backgroundColor: '#a40000',
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <CloseIcon fontSize='small' />
+                                                                </Button>
+                                                                <br />
+                                                            </Box>
                                                             <Typography variant='caption'>{event.description}</Typography><br />
                                                             {event.type !== "VACATION" ?
                                                                 <Typography variant='caption' fontStyle='italic'>{startTime} - {endTime} </Typography>
@@ -282,12 +351,12 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                                             if (event.isLoading && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
                                                 return (
                                                     <div key={index} style={{ backgroundColor: '#191919', padding: 5, borderRadius: 5, marginBlock: 5 }}>
-                                                        <Box sx={{alignContent:'center', flexDirection:'row', display:'flex', justifyContent:'center'}}>
-                                                            <CircularProgress size={15} sx={{mr:1, color:'white'}} />
+                                                        <Box sx={{ alignContent: 'center', flexDirection: 'row', display: 'flex', justifyContent: 'center' }}>
+                                                            <CircularProgress size={15} sx={{ mr: 1, color: 'white' }} />
                                                             <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>Creating event...</Typography>
                                                         </Box>
-                                                        <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>{event.title} </Typography><br/>
-                                                        <Typography variant='caption' color='white' fontStyle='italic'>{event.description}</Typography> <br/>
+                                                        <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>{event.title} </Typography><br />
+                                                        <Typography variant='caption' color='white' fontStyle='italic'>{event.description}</Typography> <br />
                                                         <Typography variant='caption' color='white' fontStyle='italic'>{event.startDate[3] + ':' + event.startDate[4]} - {event.endDate[3] + ':' + event.endDate[4]}</Typography>
                                                     </div>
                                                 );

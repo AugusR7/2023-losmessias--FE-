@@ -146,7 +146,6 @@ export default function StudentLandingPage() {
                         .then(response => {
                             if (response.ok) {
                                 return response.json().then(data => {
-                                    console.log(data)
                                     data.forEach(item => {
                                         const year = parseInt(item.deadline.split('-')[0]);
                                         const month = parseInt(item.deadline.split('-')[1]);
@@ -170,7 +169,7 @@ export default function StudentLandingPage() {
                                             if (!coincidencias)
                                                 return [
                                                     ...prev, {
-                                                        id: prev.length + 1,
+                                                        // id: prev.length + 1,
                                                         title: 'Homework',
                                                         description: item.assignment,
                                                         endDate: item.deadline,
@@ -431,9 +430,7 @@ export default function StudentLandingPage() {
                                     </Grid>
                                 </DialogContent>
                                 <DialogActions>
-                                    <Button
-                                        onClick={() => router.push(`/reservation/?id=${homeworkDetails?.classReservationId}&userId=${homeworkDetails?.professorId}`)}
-                                    >
+                                    <Button onClick={() => router.push(`/reservation/?id=${homeworkDetails?.classReservationId}&userId=${homeworkDetails?.professorId}`)} >
                                         Go to class
                                     </Button>
                                     <Button onClick={() => setHomeworkDetailsDialog(false)}>Close</Button>

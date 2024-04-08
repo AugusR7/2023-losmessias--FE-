@@ -171,8 +171,9 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                                 type: data.type
                             }])
                         })
-                    } else {
-                        setAlertMessage('An error occurred while creating the event');
+                    } else if (res.status === 400) {
+                        setAlert(true);
+                        setAlertMessage('An error occurred while creating the event. Please try again later');
                         setAlertSeverity('error');
                     }
                 })
@@ -181,6 +182,9 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                     setAlertMessage('An error occurred while creating the event');
                     setAlertSeverity('error');
                     console.log(err)
+                })
+                .finally(() => {
+                    setEvents(prevEvents => prevEvents.filter(event => !event.isLoading));
                 })
             handleClose();
         }
@@ -561,7 +565,10 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                                     return (
                                         <Grid item xs={12} key={index} sx={{
                                             backgroundColor: '#191919',
-                                            padding: 1,
+                                            paddingTop: 1,
+                                            paddingBottom: 2,
+                                            paddingLeft: 3,
+                                            paddingRight: 3,
                                             borderRadius: 2,
                                             marginBlock: 2,
                                             cursor: 'pointer',

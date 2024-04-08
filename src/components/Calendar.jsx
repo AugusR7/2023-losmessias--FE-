@@ -1,7 +1,7 @@
 import { useUser } from "@/context/UserContext";
 import useWindowSize from "@/hooks/useWindowSize";
 import { Alert, Box, Button, CircularProgress, Grid, Snackbar, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EventCreationDialog from "./modals/EventCreationDialog";
 import CloseIcon from '@mui/icons-material/Close';
 import EventDeletionDialog from "./modals/EventDeletionDialog";
@@ -9,6 +9,11 @@ import EventDeletionDialog from "./modals/EventDeletionDialog";
 
 export default function Calendar({ events, handleHomeworkClick, setEvents }) {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+    const verifyTodayDate = (day, month, year) => {
+        const today = new Date();
+        return parseInt(day) === today.getDate() && parseInt(month) === today.getMonth() + 1 && parseInt(year) === today.getFullYear();
+    }
 
     const WeekdayContainer = ({ children, style }) => {
         return (
@@ -61,6 +66,12 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
     const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
     const [endTime, setEndTime] = useState(new Date().toISOString().split('T')[1].split(':').slice(0, 2).join(':'));
     const [eventType, setEventType] = useState('EXAM');
+
+    const [isTodayDate, setIsTodayDate] = useState(true)
+
+    useEffect(() => {
+        setIsTodayDate(verifyTodayDate(day, month, year))
+    }, [day, month, year])
 
     const verifyInclusion = (initialDate, finalDate, date) => {
         const initial = new Date(initialDate[0], initialDate[1], initialDate[2]);
@@ -441,7 +452,13 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                             <Button variant='outlined' disabled={month === 1} onClick={() => handlePaginationMobile('left')}>
                                 {'<'}
                             </Button>
-                            <Typography variant='h6' sx={{ textAlign: 'center' }}>
+                            <Typography variant='h6' sx={{
+                                textAlign: 'center',
+                                backgroundColor: !isTodayDate ? 'none' : 'lightblue',
+                                borderRadius: 2,
+                                padding: 1
+                            }}
+                            >
                                 {new Date(year, month - 1).toLocaleString('en-GB', { month: 'long' })} {day}, {year}
                             </Typography>
                             <Button variant='outlined' onClick={() => handlePaginationMobile('right')}>
@@ -572,7 +589,19 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                                     <Typography color='white' fontWeight='bold' fontStyle='italic'>No events on this day</Typography>
                                 </Grid>
                             )}
-                            <Button variant='contained' onClick={() => setOpenCreationDialog(true)} sx={{ marginTop: 3 }}>Create Event</Button>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                <Button variant='contained' onClick={() => setOpenCreationDialog(true)} sx={{ marginTop: 3 }}>Create Event</Button>
+                                <Button variant='outlined'
+                                    onClick={() => {
+                                        setYear(new Date().toISOString().split('T')[0].split('-')[0]);
+                                        setMonth(new Date().toISOString().split('T')[0].split('-')[1]);
+                                        setDay(new Date().toISOString().split('T')[0].split('-')[2]);
+                                    }}
+                                    sx={{ marginTop: 3, justifySelf: 'center' }}
+                                >
+                                    Go to today
+                                </Button>
+                            </div>
                         </Grid>
                     </Grid>
                 </>

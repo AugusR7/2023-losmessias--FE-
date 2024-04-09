@@ -10,9 +10,14 @@ import EventDeletionDialog from "./modals/EventDeletionDialog";
 export default function Calendar({ events, handleHomeworkClick, setEvents }) {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-    const verifyTodayDate = (day, month, year) => {
+    const verifyTodaysDate = (day, month, year) => {
         const today = new Date();
         return parseInt(day) === today.getDate() && parseInt(month) === today.getMonth() + 1 && parseInt(year) === today.getFullYear();
+    }
+
+    const verifyTodaysMonth = (month, year) => {
+        const today = new Date();
+        return parseInt(month) === today.getMonth() + 1 && parseInt(year) === today.getFullYear();
     }
 
     const WeekdayContainer = ({ children, style }) => {
@@ -70,7 +75,7 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
     const [isTodayDate, setIsTodayDate] = useState(true)
 
     useEffect(() => {
-        setIsTodayDate(verifyTodayDate(day, month, year))
+        setIsTodayDate(verifyTodaysDate(day, month, year))
     }, [day, month, year])
 
     const verifyInclusion = (initialDate, finalDate, date) => {
@@ -78,6 +83,19 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
         const final = new Date(finalDate[0], finalDate[1], finalDate[2]);
         const current = new Date(date[0], date[1], date[2]);
         return current >= initial && current <= final;
+    }
+
+    const goToTodaysDate = () => {
+        const today = new Date();
+        setYear(today.getFullYear());
+        setMonth(today.getMonth() + 1);
+        setDay(today.getDate());
+    }
+
+    const goToTodaysMonth = () => {
+        const today = new Date();
+        setYear(today.getFullYear());
+        setMonth(today.getMonth() + 1);
     }
 
     const handleDateChange = (event, endingDate = false) => {
@@ -160,7 +178,6 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                         setAlertMessage('Event created successfully!');
                         setAlertSeverity('success');
                         res.json().then(data => {
-                            console.log(data)
                             setEvents(prevEvents => prevEvents.filter(event => !event.isLoading));
                             setEvents(prevEvents => [...prevEvents, {
                                 id: data.id,
@@ -221,21 +238,46 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
         setDeleteDialog(false);
     }
 
-    const handlePaginationMobile = (direction) => {
-        if (direction === 'left') {
-            if (day === 1) {
-                setMonth(prev => parseInt(prev) - 1);
-                setDay(numDays(year, month - 1));
-            } else {
-                setDay(prev => parseInt(prev) - 1);
-            }
+    //this only manages month and year, not day
+    const handlePagination = (direction) => {
+        const isRightDirection = direction === 'right';
+        const isMonthEnd = month === 12;
+        const isMonthStart = month === 1;
+        const newYear = isRightDirection ? parseInt(year) + 1 : parseInt(year) - 1;
+        const newMonth = isRightDirection ? 1 : 12;
+
+        if (isRightDirection && isMonthEnd) {
+            setYear(newYear);
+            setMonth(newMonth);
+        } else if (!isRightDirection && isMonthStart) {
+            setYear(newYear);
+            setMonth(newMonth);
         } else {
-            if (day === numberOfDaysInMonth) {
-                setMonth(prev => parseInt(prev) + 1);
-                setDay(1);
-            } else {
-                setDay(prev => parseInt(prev) + 1);
-            }
+            setMonth(parseInt(month) + (isRightDirection ? 1 : -1));
+        }
+    }
+
+    const handlePaginationMobile = (direction) => {
+        const isRightDirection = direction === 'right';
+        const isMonthEnd = day === numDays(year, month);
+        const isMonthStart = day === 1;
+        const isYearEnd = month === 12;
+        const isYearStart = month === 1;
+
+        const newYear = isRightDirection ? parseInt(year) + 1 : parseInt(year) - 1;
+        const newMonth = isRightDirection ? 1 : 12;
+        const newMonthDay = isRightDirection ? 1 : numDays(year, month - 1);
+
+        if (isRightDirection && isMonthEnd) {
+            setYear(isYearEnd ? newYear : year);
+            setMonth(isYearEnd ? newMonth : parseInt(month) + 1);
+            setDay(newMonthDay);
+        } else if (!isRightDirection && isMonthStart) {
+            setYear(isYearStart ? newYear : year);
+            setMonth(isYearStart ? newMonth : parseInt(month) - 1);
+            setDay(newMonthDay);
+        } else {
+            setDay(parseInt(day) + (isRightDirection ? 1 : -1));
         }
     }
 
@@ -294,13 +336,13 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                             flexDirection: 'row',
                             justifyContent: 'space-between'
                         }}>
-                            <Button variant='outlined' disabled={month === 1} onClick={() => setMonth(prev => parseInt(prev) - 1)}>
+                            <Button variant='outlined' disabled={month === 1 && year === 2024} onClick={() => handlePagination('left')} >
                                 {'<'}
                             </Button>
                             <Typography variant='h6' sx={{ textAlign: 'center' }}>
                                 {months[month - 1]} {year}
                             </Typography>
-                            <Button variant='outlined' onClick={() => setMonth(prev => parseInt(prev) + 1)}>
+                            <Button variant='outlined' onClick={() => handlePagination('right')}>
                                 {'>'}
                             </Button>
                         </Grid>
@@ -315,8 +357,11 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                                 const event_on_this_day = events.find(event => verifyInclusion(event.startDate, event.endDate, [year, month, day]))
                                 const radius = index === numberOfDaysInMonth - 1 ? 10 : 0;
                                 return (
-                                    <WeekdayContainer key={index} style={{ borderBottomLeftRadius: radius }}>
-                                        <Typography>{day}</Typography>
+                                    <WeekdayContainer key={index} style={{
+                                        borderBottomLeftRadius: radius,
+                                        backgroundColor: verifyTodaysDate(day, month, year) ? 'lightblue' : 'white'
+                                    }}>
+                                        <Typography fontWeight={verifyTodaysDate(day, month, year) ? 'bold' : 'normal'}>{day}</Typography>
                                         {events.map((event, index) => {
                                             const calendarDay = day < 10 ? `0${day}` : day;
                                             const color = event.type === 'EXAM' ? '#f28f6a' : event.type === "PROJECT_PRESENTATION" ? "#0a9dff" : "#fff952";
@@ -411,7 +456,10 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                                 )
                             })}
                         </Grid>
-                        <Button variant='contained' onClick={() => setOpenCreationDialog(true)} sx={{ marginTop: 3 }}>Create Event</Button>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                            <Button variant='contained' onClick={() => setOpenCreationDialog(true)} sx={{ marginTop: 3 }}>Create Event</Button>
+                            <Button variant='outlined' onClick={goToTodaysMonth} sx={{ marginTop: 3 }} disabled={verifyTodaysMonth(month, year)}>Go to today</Button>
+                        </div>
                     </Grid>
                 </>
             )
@@ -453,7 +501,7 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                             flexDirection: 'row',
                             justifyContent: 'space-between'
                         }}>
-                            <Button variant='outlined' disabled={month === 1} onClick={() => handlePaginationMobile('left')}>
+                            <Button variant='outlined' disabled={day === 1 && month === 1 && year === 2024} onClick={() => handlePaginationMobile('left')}>
                                 {'<'}
                             </Button>
                             <Typography variant='h6' sx={{
@@ -599,12 +647,9 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                                 <Button variant='contained' onClick={() => setOpenCreationDialog(true)} sx={{ marginTop: 3 }}>Create Event</Button>
                                 <Button variant='outlined'
-                                    onClick={() => {
-                                        setYear(new Date().toISOString().split('T')[0].split('-')[0]);
-                                        setMonth(new Date().toISOString().split('T')[0].split('-')[1]);
-                                        setDay(new Date().toISOString().split('T')[0].split('-')[2]);
-                                    }}
+                                    onClick={goToTodaysDate}
                                     sx={{ marginTop: 3, justifySelf: 'center' }}
+                                    disabled={isTodayDate}
                                 >
                                     Go to today
                                 </Button>
@@ -612,7 +657,8 @@ export default function Calendar({ events, handleHomeworkClick, setEvents }) {
                         </Grid>
                     </Grid>
                 </>
-            )}
+            )
+            }
         </div >
     )
 }

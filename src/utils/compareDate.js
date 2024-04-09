@@ -1,6 +1,21 @@
+const months = {
+    1: 'January',
+    2: 'February',
+    3: 'March',
+    4: 'April',
+    5: 'May',
+    6: 'June',
+    7: 'July',
+    8: 'August',
+    9: 'September',
+    10: 'October',
+    11: 'November',
+    12: 'December'
+};
+
 export function compare_time(a, b) {
-    console.log(a)
-    console.log(b)
+    // console.log(a)
+    // console.log(b)
     const startingHour = a.split('-')[0].trim().split(':');
     const endingHour = a.split('-')[1].trim().split(':');
 
@@ -36,4 +51,8 @@ export function parseDate(date) {
     let splittedDate = date.toLocaleString().split(',')[0].split('/');
     splittedDate.pop();
     return splittedDate.join('/');
+}
+
+export function parseDateToDisplay(day, month, year) {
+    return `${months[month]} ${day}, ${year}`;
 }

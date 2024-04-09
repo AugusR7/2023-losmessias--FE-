@@ -60,6 +60,9 @@ export default function ProfessorLandingPage() {
     const [feedbackStatus, setFeedbackStatus] = useState('info');
     const [autoHideDuration, setAutoHideDuration] = useState(null);
     const [day, setDay] = useState(1);
+    const [monthDay, setMonthDay] = useState(new Date().getDate());
+    const [month, setMonth] = useState(new Date().getMonth() + 1);
+    const [year, setYear] = useState(new Date().getFullYear());
     const windowSize = useWindowSize();
     const [nullFeedback, setNullFeedback] = useState(false);
 
@@ -375,7 +378,17 @@ export default function ProfessorLandingPage() {
                                     </tbody>
                                 </table>
                                 {windowSize.width > 500 && (
-                                    <AgendaPagination week={week} setWeek={setWeek} setSelectedBlocks={setSelectedBlocks} />
+                                    <AgendaPagination
+                                        week={week}
+                                        setWeek={setWeek}
+                                        setSelectedBlocks={setSelectedBlocks}
+                                        monthDay={monthDay}
+                                        setMonthDay={setMonthDay}
+                                        month={month}
+                                        setMonth={setMonth}
+                                        year={year}
+                                        setYear={setYear}
+                                    />
                                 )}
                             </div>
 
@@ -386,6 +399,12 @@ export default function ProfessorLandingPage() {
                                     day={day}
                                     setDay={setDay}
                                     setSelectedBlocks={setSelectedBlocks}
+                                    monthDay={monthDay}
+                                    setMonthDay={setMonthDay}
+                                    month={month}
+                                    setMonth={setMonth}
+                                    year={year}
+                                    setYear={setYear}
                                 />
                             )}
                             <Agenda

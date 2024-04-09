@@ -30,6 +30,10 @@ import Calendar from '@/components/Calendar';
 export default function StudentLandingPage() {
     const [week, setWeek] = useState(0);
     const [day, setDay] = useState(1);
+    const [monthDay, setMonthDay] = useState(new Date().getDate());
+    const [month, setMonth] = useState(new Date().getMonth() + 1);
+    const [year, setYear] = useState(new Date().getFullYear());
+
     const [disabledBlocks, setDisabledBlocks] = useState([]);
     const [giveFeedback, setGiveFeedback] = useState(false);
     const [feedback, setFeedback] = useState({ rating: 0, time: 0, material: 0, kind: 0 });
@@ -350,10 +354,34 @@ export default function StudentLandingPage() {
                                         </tr>
                                     </tbody>
                                 </table>
-                                {windowSize.width > 500 && <AgendaPagination week={week} setWeek={setWeek} setSelectedBlocks={() => { }} />}
+                                {windowSize.width > 500 &&
+                                    <AgendaPagination
+                                        week={week}
+                                        setWeek={setWeek}
+                                        setSelectedBlocks={() => { }}
+                                        monthDay={monthDay}
+                                        month={month}
+                                        year={year}
+                                        setMonthDay={setMonthDay}
+                                        setMonth={setMonth}
+                                        setYear={setYear}
+                                    />
+                                }
                             </div>
                             {windowSize.width <= 500 && (
-                                <AgendaPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={() => { }} />
+                                <AgendaPagination
+                                    week={week}
+                                    setWeek={setWeek}
+                                    day={day}
+                                    setDay={setDay}
+                                    setSelectedBlocks={() => { }}
+                                    monthDay={monthDay}
+                                    month={month}
+                                    year={year}
+                                    setMonthDay={setMonthDay}
+                                    setMonth={setMonth}
+                                    setYear={setYear}
+                                />
                             )}
                             <Agenda
                                 selectedBlocks={[]}

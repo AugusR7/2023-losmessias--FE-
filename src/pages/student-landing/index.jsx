@@ -29,7 +29,7 @@ import Calendar from '@/components/Calendar';
 
 export default function StudentLandingPage() {
     const [week, setWeek] = useState(0);
-    const [day, setDay] = useState(1);
+    const [day, setDay] = useState(new Date().getDay());
     const [monthDay, setMonthDay] = useState(new Date().getDate());
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());

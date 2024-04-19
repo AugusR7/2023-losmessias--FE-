@@ -59,7 +59,7 @@ export default function ProfessorLandingPage() {
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
     const [feedbackStatus, setFeedbackStatus] = useState('info');
     const [autoHideDuration, setAutoHideDuration] = useState(null);
-    const [day, setDay] = useState(1);
+    const [day, setDay] = useState(new Date().getDay());
     const [monthDay, setMonthDay] = useState(new Date().getDate());
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());

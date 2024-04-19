@@ -1,6 +1,10 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, TextField, Typography, styled } from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFileChange, date, handleDateChange, time, handleTimeChange, handleSave, handleClose, isProfessor, mobile }) {
+import useWindowSize from "@/hooks/useWindowSize";
+export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFileChange, date, handleDateChange, time, handleTimeChange, handleSave, handleClose, isProfessor }) {
+    const windowSize = useWindowSize();
+    const mobile = windowSize.width <= 500;
+
 
     const VisuallyHiddenInput = styled('input')({
         clip: 'rect(0 0 0 0)',
@@ -16,7 +20,7 @@ export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFi
     return (
         <Dialog open={open} onClose={handleClose} fullWidth>
             <DialogTitle>{isProfessor ? "Add Homework" : "Complete Homework"}</DialogTitle>
-            <DialogContent dividers sx={{ display: 'flex', alignItems: 'center', flexDirection: mobile ? 'row' : 'column' }}>
+            <DialogContent dividers sx={{ display: 'flex', alignItems: 'center', flexDirection: mobile ? 'column' : 'column' }}>
                 <div style={{ display: 'flex', flexDirection: !mobile ? 'row' : 'column', paddingBottom: '1rem', alignItems: 'center' }}>
                     <div style={{ paddingInline: '2rem', marginBottom: mobile ? 20 : 0 }}>
                         <TextField
@@ -54,7 +58,7 @@ export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFi
                                 defaultValue={date}
                                 value={date}
                                 onChange={event => handleDateChange(event)}
-                                sx={{ width: 220 }}
+                                sx={{ width: mobile ? '100%' : 200 }}
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
@@ -66,7 +70,7 @@ export function HomeworkDialog({ open, newMessage, setNewMessage, file, handleFi
                                 defaultValue={time}
                                 value={time}
                                 onChange={handleTimeChange}
-                                sx={{ width: 120, marginLeft: 2 }}
+                                sx={{ width: mobile ? "100%" : 120, marginLeft: mobile ? 0 : 2, marginTop: mobile ? 2 : 0}}
                                 InputLabelProps={{
                                     shrink: true,
                                 }}

@@ -2,6 +2,7 @@ import { Alert, Box, Button, Snackbar } from "@mui/material";
 import { useState } from "react";
 import { useUser } from "@/context/UserContext";
 import { HomeworkDialog } from "./modals/HomeworkDialog";
+import { getDateGMTMinus3, getDateGMTMinus3ISO, getISODateFromLocalString, getISOTimeFromLocalString } from "@/helpers/TimeHelpers";
 
 export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks }) {
     const user = useUser();
@@ -11,18 +12,19 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
     const [file, setFile] = useState(null); // File
     const [newMessage, setNewMessage] = useState(''); // string
     const [alertMessage, setAlertMessage] = useState(''); // string
-    const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); // YYYY-MM-DD
-    const [time, setTime] = useState(new Date().toISOString().slice(11, 16)); // HH:MM
+    const [date, setDate] = useState(getISODateFromLocalString(getDateGMTMinus3())); // YYYY-MM-DD
+    const [time, setTime] = useState(getISOTimeFromLocalString(getDateGMTMinus3())); // HH:MM
+
     const handleClose = () => {
         setOpen(false);
         setNewMessage('');
         setFile(null);
-        setDate(new Date().toISOString().slice(0, 10));
-        setTime(new Date().toISOString().slice(11, 16));
+        setDate(getISODateFromLocalString(getDateGMTMinus3()));
+        setTime(getISOTimeFromLocalString(getDateGMTMinus3()));
     };
 
     const handleDateChange = (event) => {
-        if (event.target.value < new Date().toISOString().slice(0, 10)) {
+        if (event.target.value < getDateGMTMinus3ISO().slice(0, 10)) {
             setAlert(true)
             setAlertSeverity('error')
             setAlertMessage("Please select a date  begining from today (or in the future)")
@@ -33,7 +35,7 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
     };
 
     const handleTimeChange = (event) => {
-        if (event.target.value < new Date().toISOString().slice(11, 16)) {
+        if (event.target.value < getDateGMTMinus3ISO().slice(11, 16)) {
             setAlert(true)
             setAlertSeverity('error')
             setAlertMessage("Please select a time greater than the current time")

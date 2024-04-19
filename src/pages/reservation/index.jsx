@@ -279,7 +279,6 @@ export default function Reservation() {
                 handleFileChange={handleFileChange}
                 handleClose={handleCloseHomeworkDialog}
                 handleSave={handleSave}
-                mobile={windowSize.width <= 500}
             />
             <Snackbar
                 open={alert}
@@ -441,7 +440,7 @@ export default function Reservation() {
                                                 <Typography>Posting homework...</Typography>
                                             </div>
                                         ))}
-                                        {homeworks.map((homework, idx) => {
+                                        {homeworks.length > 0 ? homeworks.map((homework, idx) => {
                                             const color = homework.status === "PENDING" ? "red" : homework.status === "DONE" ? "green" : "orange";
 
                                             return (
@@ -521,7 +520,20 @@ export default function Reservation() {
                                                     </Button>
                                                 </Card>
                                             );
-                                        })}
+                                        }) :
+                                            <div style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                height: '100%',
+                                                padding: '1rem',
+                                                // backgroundColor: 'rgb(144, 199, 255)',
+                                                borderRadius: 5
+                                            }}>
+                                                <Typography variant='h6' sx={{ fontStyle: 'italic' }}>No homeworks to display</Typography>
+                                            </div>
+                                        }
                                     </>
                                 )}
                             </div>
@@ -649,7 +661,7 @@ export default function Reservation() {
                                                     <Typography>Posting homework...</Typography>
                                                 </div>
                                             ))}
-                                            {homeworks.map((homework, idx) => {
+                                            {homeworks.length > 0 ? homeworks.map((homework, idx) => {
                                                 const color = homework.status === "PENDING" ? "red" : homework.status === "DONE" ? "green" : "orange";
 
                                                 return (
@@ -729,7 +741,19 @@ export default function Reservation() {
                                                         </Button>
                                                     </Card>
                                                 );
-                                            })}
+                                            }) :
+                                                <div style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    height: '100%',
+                                                    padding: '1rem',
+                                                    borderRadius: 5
+                                                }}>
+                                                    <Typography variant='h6' sx={{ fontStyle: 'italic' }}>No homeworks to display</Typography>
+                                                </div>
+                                            }
                                         </>
                                     )}
                                 </div>

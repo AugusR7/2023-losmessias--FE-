@@ -29,3 +29,14 @@ export const getDateGMTMinus3ISO = () => {
     const timeInMinus3 = date.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' });
     return `${getISODateFromLocalString(timeInMinus3)}T${getISOTimeFromLocalString(timeInMinus3)}`;
 }
+
+export const addMinutesToTime = (time, minutes) => {
+    const timeArray = time.split(':');
+    const hour = parseInt(timeArray[0]);
+    const minute = parseInt(timeArray[1]);
+    const newMinute = minute + minutes;
+    if (newMinute >= 60) {
+        return `${hour + 1}:${newMinute - 60}`;
+    }
+    return `${hour}:${newMinute}`;
+}

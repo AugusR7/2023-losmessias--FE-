@@ -2,7 +2,7 @@ import { Alert, Box, Button, Snackbar } from "@mui/material";
 import { useState } from "react";
 import { useUser } from "@/context/UserContext";
 import { HomeworkDialog } from "./modals/HomeworkDialog";
-import { getDateGMTMinus3, getDateGMTMinus3ISO, getISODateFromLocalString, getISOTimeFromLocalString } from "@/helpers/TimeHelpers";
+import { addMinutesToTime, getDateGMTMinus3, getDateGMTMinus3ISO, getISODateFromLocalString, getISOTimeFromLocalString } from "@/helpers/TimeHelpers";
 
 export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks }) {
     const user = useUser();
@@ -61,6 +61,13 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
 
     const dateFormatter = (date, time) => {
         return `${date}T${time}:00`
+    }
+
+    const handleOpen = () => {
+        setOpen(true);
+        const secureTime = addMinutesToTime(getDateGMTMinus3ISO().slice(11, 16), 2);
+        setDate(getISODateFromLocalString(getDateGMTMinus3()));
+        setTime(secureTime);
     }
 
     const handleSave = () => {
@@ -129,7 +136,7 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                 <Button
                     variant='contained'
-                    onClick={() => setOpen(true)}
+                    onClick={handleOpen}
                 >
                     Add Homework
                 </Button>

@@ -31,11 +31,19 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
         } else {
             setAlert(false)
             setDate(event.target.value);
+            //if the time is less than the current time, set the time to the current time
+            if (event.target.value === getDateGMTMinus3ISO().slice(0, 10) && time < getDateGMTMinus3ISO().slice(11, 16)) {
+                setTime(getDateGMTMinus3ISO().slice(11, 16));
+            }
         }
     };
 
     const handleTimeChange = (event) => {
-        if (event.target.value < getDateGMTMinus3ISO().slice(11, 16)) {
+        // if the date is tomorrow or in the future, the time can be any time
+        // otherwise, if the date is today, the time must be greater than the current time
+        if (date > getDateGMTMinus3ISO().slice(0, 10)) {
+            setTime(event.target.value);
+        } else if (date === getDateGMTMinus3ISO().slice(0, 10) && event.target.value < getDateGMTMinus3ISO().slice(11, 16)) {
             setAlert(true)
             setAlertSeverity('error')
             setAlertMessage("Please select a time greater than the current time")

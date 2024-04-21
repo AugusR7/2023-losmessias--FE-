@@ -26,6 +26,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import useWindowSize from '@/hooks/useWindowSize';
 import HomeworkButton from '@/components/HomeworkButton';
 import { HomeworkDialog } from '@/components/modals/HomeworkDialog';
+import CloseIcon from '@mui/icons-material/Close';
 
 function parse(dateTime) {
     let date = dateTime.slice(0, 3);
@@ -65,6 +66,8 @@ export default function Reservation() {
     const [file, setFile] = useState(null);
     const [newMessage, setNewMessage] = useState('');
     const [homeworkToRespond, setHomeworkToRespond] = useState({});
+    const [homeworkDeleteDialog, setHomeworkDeleteDialog] = useState(false);
+    const [homeworkToDelete, setHomeworkToDelete] = useState({});
     const handleCloseHomeworkDialog = () => setOpenHomeworkDialog(false);
 
     const handleHomeworkResponse = (homework) => {
@@ -178,6 +181,35 @@ export default function Reservation() {
         }
     }
 
+    const handleDelete = () => {
+        setOpenHomeworkDialog(false);
+        const homework = homeworkToDelete;
+        const requestOptions = {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${user.token}` },
+        };
+
+        fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/homework/delete/${homework.id}`, requestOptions)
+            .then(res => {
+                if (res.ok) {
+                    setHomeWorks(prevHomeworks => prevHomeworks.filter(h => h.id !== homework.id));
+                    setAlert(true);
+                    setAlertSeverity('success');
+                    setAlertMessage('Homework deleted successfully');
+                } else {
+                    setAlert(true);
+                    setAlertSeverity('error');
+                    setAlertMessage('Error deleting homework');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                setAlert(true);
+                setAlertSeverity('error');
+                setAlertMessage('Error deleting homework');
+            });
+    }
+
     useEffect(() => {
         if (router.isReady) {
             if (user.id) {
@@ -280,6 +312,36 @@ export default function Reservation() {
                 handleClose={handleCloseHomeworkDialog}
                 handleSave={handleSave}
             />
+            {/* Confirm if you want to delete homework */}
+            <Dialog
+                open={homeworkDeleteDialog}
+                onClose={() => {
+                    setHomeworkDeleteDialog(false)
+                    setHomeworkToDelete({})
+                }}
+                aria-labelledby='alert-dialog-title'
+                aria-describedby='alert-dialog-description'
+            >
+                <DialogTitle id='alert-dialog-title'>{'Are you sure you want to delete this homework?'}</DialogTitle>
+                <DialogContent>
+                    <Typography variant='body1' id='alert-dialog-description'>
+                        This action is irreversible. Once you delete this homework, you won't be able to recover it.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => {
+                        setHomeworkDeleteDialog(false)
+                        setHomeworkToDelete({})
+                    }} color='primary'>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleDelete} color='primary' autoFocus>
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+
             <Snackbar
                 open={alert}
                 autoHideDuration={6000}
@@ -454,6 +516,24 @@ export default function Reservation() {
                                                                         due {formatDate(homework.deadline)}
                                                                     </Typography>
                                                                 }
+                                                                {/* delete button like the one on*/}
+                                                                <Button
+                                                                    onClick={() => {
+                                                                        setOpenHomeworkDialog(false);
+                                                                        setHomeworkToDelete(homework);
+                                                                        setHomeworkDeleteDialog(true);
+                                                                    }}
+                                                                    sx={{
+                                                                        position: 'absolute',
+                                                                        right: 10,
+                                                                        top: 10,
+                                                                        color: 'red',
+                                                                        backgroundColor: '#edf5fb',
+                                                                        display: 'flex',
+                                                                    }}
+                                                                >
+                                                                    <CloseIcon fontSize='small' />
+                                                                </Button>
                                                             </div>
                                                             <Grid container>
                                                                 <Grid item xs={3} sx={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>

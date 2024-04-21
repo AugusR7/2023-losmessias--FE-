@@ -66,7 +66,6 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
     const handleOpen = () => {
         setOpen(true);
         const secureTime = addMinutesToTime(getISOTimeFromLocalString(getDateGMTMinus3()), 2);
-        console.log(secureTime)
         setDate(getISODateFromLocalString(getDateGMTMinus3()));
         setTime(secureTime);
     }
@@ -89,9 +88,6 @@ export default function HomeworkButton({ id, setHomeWorks, setUploadingHomeworks
                 responseFile: null,
                 response: null
             }]);
-            data.forEach((value, key) => {
-                console.log(`${key}: ${value}`)
-            })
 
             fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/homework/create`, {
                 method: 'POST',

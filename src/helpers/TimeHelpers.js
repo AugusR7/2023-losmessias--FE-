@@ -1,7 +1,6 @@
 export const getDateGMTMinus3 = () => {
     const date = new Date();
     const timeInMinus3 = date.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' });
-    console.log(timeInMinus3)
     return timeInMinus3;
 }
 

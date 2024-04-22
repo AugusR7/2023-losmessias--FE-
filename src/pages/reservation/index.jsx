@@ -108,6 +108,11 @@ export default function Reservation() {
             data.append('file', file);
             data.append('response', newMessage);
             data.append('associatedId', user.id);
+            setAlert(true);
+            setAlertSeverity('info');
+            setAlertMessage('Posting homework...');
+            setOpenHomeworkDialog(false);
+
 
             setHomeWorks(prevHomeworks => prevHomeworks.filter(homework => homework.id !== homeworkToRespond.id));
             setUploadingHomeworks(prevHomeworks => [

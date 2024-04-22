@@ -110,11 +110,14 @@ export default function Agenda({ selectedBlocks, setSelectedBlocks, disabledBloc
         blockDate[2] = bubble;
         if (blockDate[1].length === 1) blockDate[1] = '0' + blockDate[1];
         if (blockDate[2].length === 1) blockDate[2] = '0' + blockDate[2];
+        // bubble the second element to the third and viceversa of the blockDate
+        let temp = blockDate[1];
+        blockDate[1] = blockDate[2];
+        blockDate[2] = temp;
         blockDate = blockDate.join('-');
         const blockDisabled = disabledBlocks.find(
             blk => blockDate === blk.day.join('-') && blk.status === 'CONFIRMED' && compare_time(block, blk)
         );
-
         if (blockDisabled) return true;
         return false;
     };

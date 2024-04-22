@@ -334,7 +334,7 @@ export default function Reservation() {
             >
                 <DialogTitle id='alert-dialog-title'>{'Are you sure you want to delete this homework?'}</DialogTitle>
                 <DialogContent>
-                    <Typography variant='body' id='alert-dialog-description'>
+                    <Typography id='alert-dialog-description'>
                         This action is irreversible. Once you delete this homework, you won&apos;t be able to recover it.
                     </Typography>
                 </DialogContent>
@@ -826,7 +826,7 @@ export default function Reservation() {
                                                                 }
                                                             </CardContent>
                                                         </Button>
-                                                        {user.role === "professor" && homework.status !== "DONE" &&
+                                                        {user.role === "professor" && homework.status === "PENDING" &&
                                                             <Button
                                                                 onClick={() => {
                                                                     setHomeworkDeleteDialog(true);

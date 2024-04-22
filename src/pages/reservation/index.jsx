@@ -207,6 +207,12 @@ export default function Reservation() {
                 setAlert(true);
                 setAlertSeverity('error');
                 setAlertMessage('Error deleting homework');
+            }).finally(() => {
+                setHomeworkDeleteDialog(false);
+                setHomeworkToDelete({});
+                setTimeout(() => {
+                    setAlert(false);
+                }, 3000);
             });
     }
 
@@ -312,7 +318,6 @@ export default function Reservation() {
                 handleClose={handleCloseHomeworkDialog}
                 handleSave={handleSave}
             />
-            {/* Confirm if you want to delete homework */}
             <Dialog
                 open={homeworkDeleteDialog}
                 onClose={() => {
@@ -324,8 +329,8 @@ export default function Reservation() {
             >
                 <DialogTitle id='alert-dialog-title'>{'Are you sure you want to delete this homework?'}</DialogTitle>
                 <DialogContent>
-                    <Typography variant='body1' id='alert-dialog-description'>
-                        This action is irreversible. Once you delete this homework, you won't be able to recover it.
+                    <Typography variant='body' id='alert-dialog-description'>
+                        This action is irreversible. Once you delete this homework, you won&apos;t be able to recover it.
                     </Typography>
                 </DialogContent>
                 <DialogActions>
@@ -516,24 +521,6 @@ export default function Reservation() {
                                                                         due {formatDate(homework.deadline)}
                                                                     </Typography>
                                                                 }
-                                                                {/* delete button like the one on*/}
-                                                                <Button
-                                                                    onClick={() => {
-                                                                        setOpenHomeworkDialog(false);
-                                                                        setHomeworkToDelete(homework);
-                                                                        setHomeworkDeleteDialog(true);
-                                                                    }}
-                                                                    sx={{
-                                                                        position: 'absolute',
-                                                                        right: 10,
-                                                                        top: 10,
-                                                                        color: 'red',
-                                                                        backgroundColor: '#edf5fb',
-                                                                        display: 'flex',
-                                                                    }}
-                                                                >
-                                                                    <CloseIcon fontSize='small' />
-                                                                </Button>
                                                             </div>
                                                             <Grid container>
                                                                 <Grid item xs={3} sx={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>
@@ -598,6 +585,22 @@ export default function Reservation() {
                                                             }
                                                         </CardContent>
                                                     </Button>
+                                                    {user.role === "professor" &&
+                                                        <Button
+                                                            onClick={() => {
+                                                                setHomeworkDeleteDialog(true);
+                                                                setHomeworkToDelete(homework);
+                                                            }}
+                                                            sx={{
+                                                                position: 'relative',
+                                                                color: 'red',
+                                                                backgroundColor: '#edf5fb',
+                                                                display: 'flex',
+                                                            }}
+                                                        >
+                                                            <CloseIcon fontSize='small' />
+                                                        </Button>
+                                                    }
                                                 </Card>
                                             );
                                         }) :
@@ -608,7 +611,6 @@ export default function Reservation() {
                                                 justifyContent: 'center',
                                                 height: '100%',
                                                 padding: '1rem',
-                                                // backgroundColor: 'rgb(144, 199, 255)',
                                                 borderRadius: 5
                                             }}>
                                                 <Typography variant='h6' sx={{ fontStyle: 'italic' }}>No homeworks to display</Typography>
@@ -745,7 +747,7 @@ export default function Reservation() {
                                                 const color = homework.status === "PENDING" ? "red" : homework.status === "DONE" ? "green" : "orange";
 
                                                 return (
-                                                    <Card sx={{ display: "flex", width: "100%", marginBottom: '1rem', marginRight: '1rem' }} key={idx} >
+                                                    <Card sx={{ display: "flex", width: "100%", marginBottom: '1rem', marginRight: '1rem', flexDirection: 'column' }} key={idx} >
                                                         <Button onClick={() => handleHomeworkResponse(homework)} sx={{ width: '100%' }}>
                                                             <CardContent sx={{ marginLeft: '1rem', width: '100%' }}>
                                                                 <div style={{ display: "flex", flexDirection: "row", alignItems: 'center', marginBottom: '1rem', justifyContent: 'center' }}>
@@ -819,6 +821,23 @@ export default function Reservation() {
                                                                 }
                                                             </CardContent>
                                                         </Button>
+                                                        {user.role === "professor" &&
+                                                            <Button
+                                                                onClick={() => {
+                                                                    setHomeworkDeleteDialog(true);
+                                                                    setHomeworkToDelete(homework);
+                                                                }}
+                                                                sx={{
+                                                                    position: 'relative',
+                                                                    color: 'red',
+                                                                    backgroundColor: '#edf5fb',
+                                                                    display: 'flex',
+                                                                    borderRadius: 0
+                                                                }}
+                                                            >
+                                                                <CloseIcon fontSize='small' />
+                                                            </Button>
+                                                        }
                                                     </Card>
                                                 );
                                             }) :

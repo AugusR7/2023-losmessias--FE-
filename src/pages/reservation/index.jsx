@@ -821,7 +821,7 @@ export default function Reservation() {
                                                                 }
                                                             </CardContent>
                                                         </Button>
-                                                        {user.role === "professor" &&
+                                                        {user.role === "professor" && homework.status !== "DONE" &&
                                                             <Button
                                                                 onClick={() => {
                                                                     setHomeworkDeleteDialog(true);

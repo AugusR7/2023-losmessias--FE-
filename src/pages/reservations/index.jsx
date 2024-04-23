@@ -118,13 +118,13 @@ export default function Reservation() {
             if (dateElements[0].length === 1) dateElements[0] = '0' + dateElements[0];
             if (dateElements[1].length === 1) dateElements[1] = '0' + dateElements[1];
             console.log(dateElements)
+            // let bubble = dateElements[0];
+            // dateElements[2] = dateElements[1];
+            // dateElements[0] = dateElements[2];
+            // dateElements[1] = bubble;
             let bubble = dateElements[0];
             dateElements[0] = dateElements[2];
-            dateElements[2] = dateElements[1];
-            dateElements[1] = bubble;
-            // let bubble = dateElements[0];
-            // dateElements[0] = dateElements[2];
-            // dateElements[2] = bubble;
+            dateElements[2] = bubble;
             date = dateElements.join('-');
             console.log(date)
 

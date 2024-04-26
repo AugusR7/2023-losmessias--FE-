@@ -62,7 +62,7 @@ export default function MonthlyChart({ id, legend = false }) {
                 statistic: {
                     title: false,
                     content: {
-                        customHtml: () => <Typography variant='h4'>{data[2].total}</Typography>,
+                        customHtml: () => <Typography variant='h4'>{data[2].total.toFixed(2)}</Typography>,
                         style: {
                             whiteSpace: 'pre-wrap',
                             overflow: 'hidden',
@@ -109,7 +109,7 @@ export default function MonthlyChart({ id, legend = false }) {
                             </Typography>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
                                 <PaidIcon sx={{ fontSize: 30 }} />
-                                <Typography variant='h6'>{data[2]?.income}</Typography>
+                                <Typography variant='h6'>{data[2]?.income.toFixed(2)}</Typography>
                             </div>
                         </>
                     )}

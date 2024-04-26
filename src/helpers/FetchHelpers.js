@@ -22,7 +22,7 @@ export const fetcherGetWithToken = async ([url, token]) => {
     }
 };
 
-export const fetchGetWithTokenCalendar = async ([url, token]) => {
+export const fetchGetWithTokenAgenda = async ([url, token]) => {
     try {
         const res = await fetch(url, {
             method: 'GET',

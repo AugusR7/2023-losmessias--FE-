@@ -1,5 +1,5 @@
-import Calendar from '@/components/Calendar';
-import CalendarPagination from '@/components/CalendarPagination';
+import Agenda from '@/components/Agenda';
+import AgendaPagination from '@/components/AgendaPagination';
 import Dashboard from '@/components/Dashboard';
 import { useUser } from '@/context/UserContext';
 import { order_and_group } from '@/utils/order_and_group';
@@ -59,7 +59,10 @@ export default function ProfessorLandingPage() {
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
     const [feedbackStatus, setFeedbackStatus] = useState('info');
     const [autoHideDuration, setAutoHideDuration] = useState(null);
-    const [day, setDay] = useState(1);
+    const [day, setDay] = useState(new Date().getDay());
+    const [monthDay, setMonthDay] = useState(new Date().getDate());
+    const [month, setMonth] = useState(new Date().getMonth() + 1);
+    const [year, setYear] = useState(new Date().getFullYear());
     const windowSize = useWindowSize();
     const [nullFeedback, setNullFeedback] = useState(false);
 
@@ -68,61 +71,68 @@ export default function ProfessorLandingPage() {
 
     useEffect(() => {
         setIsLoading(true);
-        if (user.id) {
-            if (user.role == 'student') router.push('/student-landing');
-            if (user.role === 'admin') router.push('/admin-landing');
-            const requestOptions = {
-                method: 'GET',
-                headers: { Authorization: `Bearer ${user.token}` },
-            };
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/findByProfessor?professorId=${user.id}`, requestOptions).then(res => {
-                if (res.status === 200) {
-                    res.json().then(json => {
-                        setDisabledBlocks(
-                            json.map(e => {
-                                if (e.day[2] < 10) e.day[2] = '0' + e.day[2];
-                                return e;
-                            })
-                        );
-                    });
-                }
-                setIsLoading(false);
-            });
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/professor/${user.id}`, requestOptions).then(res => {
-                if (res.status === 200) {
-                    return res.json().then(json => {
-                        json.pendingClassesFeedbacks.map(reservation => {
-                            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/${reservation}`, requestOptions).then(res2 => {
-                                res2.json().then(json2 => {
-                                    setPendingFeedback(prev => {
-                                        let exists = false;
-                                        prev.forEach(pfed => {
-                                            if (pfed.reservation_id === reservation) exists = true;
-                                        });
+        if (router.isReady)
+            if (user.id) {
+                if (user.role == 'student') router.push('/student-landing');
+                if (user.role === 'admin') router.push('/admin-landing');
+                const requestOptions = {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${user.token}` },
+                };
+                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/findByProfessor?professorId=${user.id}`, requestOptions).then(res => {
+                    if (res.status === 200) {
+                        res.json().then(json => {
+                            setDisabledBlocks(
+                                json.map(e => {
+                                    if (e.day[1] < 10) e.day[1] = '0' + e.day[1];
+                                    if (e.day[2] < 10) e.day[2] = '0' + e.day[2];
+                                    if (e.startingHour[0] < 10) e.startingHour[0] = '0' + e.startingHour[0];
+                                    if (e.startingHour[1] < 10) e.startingHour[1] = '0' + e.startingHour[1];
+                                    if (e.endingHour[0] < 10) e.endingHour[0] = '0' + e.endingHour[0];
+                                    if (e.endingHour[1] < 10) e.endingHour[1] = '0' + e.endingHour[1];
+                                    return e;
+                                })
+                            );
+                        });
+                    }
+                    setIsLoading(false);
+                });
+                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/professor/${user.id}`, requestOptions).then(res => {
+                    if (res.status === 200) {
+                        return res.json().then(json => {
+                            json.pendingClassesFeedbacks.map(reservation => {
+                                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/${reservation}`, requestOptions).then(res2 => {
+                                    res2.json().then(json2 => {
+                                        setPendingFeedback(prev => {
+                                            let exists = false;
+                                            prev.forEach(pfed => {
+                                                if (pfed.reservation_id === reservation) exists = true;
+                                            });
 
-                                        if (!exists)
-                                            return [
-                                                ...prev,
-                                                {
-                                                    reservation_id: reservation,
-                                                    receiver: {
-                                                        id: json2.student.id,
-                                                        name: `${json2.student.firstName} ${json2.student.lastName}`,
+                                            if (!exists)
+                                                return [
+                                                    ...prev,
+                                                    {
+                                                        reservation_id: reservation,
+                                                        receiver: {
+                                                            id: json2.student.id,
+                                                            name: `${json2.student.firstName} ${json2.student.lastName}`,
+                                                        },
                                                     },
-                                                },
-                                            ];
-                                        else return prev;
+                                                ];
+                                            else return prev;
+                                        });
                                     });
                                 });
+                                setGiveFeedback(true);
                             });
-                            setGiveFeedback(true);
                         });
-                    });
-                }
-            });
-        } else {
-            router.push('/');
-        }
+                    }
+                });
+
+            } else {
+                router.push('/');
+            }
     }, [router, user]);
 
     const handleCancel = () => {
@@ -146,8 +156,9 @@ export default function ProfessorLandingPage() {
             let dateElements = date.split('/');
             let bubble = dateElements[0];
             dateElements[0] = dateElements[2];
-            dateElements[2] = dateElements[1];
-            dateElements[1] = bubble;
+            dateElements[2] = bubble;
+            if (dateElements[1] < 10) dateElements[1] = '0' + dateElements[1];
+            if (dateElements[2] < 10) dateElements[2] = '0' + dateElements[2];
             date = dateElements.join('-');
 
             const reservation = {
@@ -304,8 +315,8 @@ export default function ProfessorLandingPage() {
                             {feedbackStatus === 'info'
                                 ? 'Sending feedback...'
                                 : feedbackStatus === 'success'
-                                ? 'Feedback sent!'
-                                : 'Error sending feedback'}
+                                    ? 'Feedback sent!'
+                                    : 'Error sending feedback'}
                         </Alert>
                     </Snackbar>
 
@@ -368,20 +379,36 @@ export default function ProfessorLandingPage() {
                                     </tbody>
                                 </table>
                                 {windowSize.width > 500 && (
-                                    <CalendarPagination week={week} setWeek={setWeek} setSelectedBlocks={setSelectedBlocks} />
+                                    <AgendaPagination
+                                        week={week}
+                                        setWeek={setWeek}
+                                        setSelectedBlocks={setSelectedBlocks}
+                                        monthDay={monthDay}
+                                        setMonthDay={setMonthDay}
+                                        month={month}
+                                        setMonth={setMonth}
+                                        year={year}
+                                        setYear={setYear}
+                                    />
                                 )}
                             </div>
 
                             {windowSize.width <= 500 && (
-                                <CalendarPagination
+                                <AgendaPagination
                                     week={week}
                                     setWeek={setWeek}
                                     day={day}
                                     setDay={setDay}
                                     setSelectedBlocks={setSelectedBlocks}
+                                    monthDay={monthDay}
+                                    setMonthDay={setMonthDay}
+                                    month={month}
+                                    setMonth={setMonth}
+                                    year={year}
+                                    setYear={setYear}
                                 />
                             )}
-                            <Calendar
+                            <Agenda
                                 selectedBlocks={selectedBlocks}
                                 setSelectedBlocks={setSelectedBlocks}
                                 disabledBlocks={disabledBlocks}
@@ -391,7 +418,7 @@ export default function ProfessorLandingPage() {
                             />
 
                             <div style={{ display: 'flex', justifyContent: 'right', margin: '1rem auto', width: '90%' }}>
-                                <Button onClick={handleCancel}>Cancel</Button>
+                                <Button onClick={handleCancel} disabled={selectedBlocks.length === 0}>Cancel</Button>
                                 <Button variant='contained' onClick={handleConfirmationOpen} disabled={selectedBlocks.length === 0}>
                                     Disable
                                 </Button>

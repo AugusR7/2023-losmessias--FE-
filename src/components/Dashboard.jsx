@@ -108,7 +108,7 @@ export default function Dashboard({ id }) {
                 statistic: {
                     title: false,
                     content: {
-                        customHtml: () => <Typography variant='h4'>{data[2].total}</Typography>,
+                        customHtml: () => <Typography variant='h4'>{data[2].total.toFixed(2)}</Typography>,
                         style: {
                             whiteSpace: 'pre-wrap',
                             overflow: 'hidden',
@@ -165,13 +165,13 @@ export default function Dashboard({ id }) {
                             windowSize.width > 500
                                 ? { display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 20 }
                                 : {
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      justifyContent: 'center',
-                                      gap: 20,
-                                      alignItems: 'center',
-                                      marginTop: '1rem',
-                                  }
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    gap: 20,
+                                    alignItems: 'center',
+                                    marginTop: '1rem',
+                                }
                         }
                     >
                         <div>
@@ -256,7 +256,7 @@ export default function Dashboard({ id }) {
                     <>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
                             <PaidIcon sx={{ fontSize: 30 }} />
-                            <Typography variant='h6'>{data[2]?.income}</Typography>
+                            <Typography variant='h6'>{data[2]?.income.toFixed(2)}</Typography>
                         </div>
                     </>
                 ) : (

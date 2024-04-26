@@ -23,14 +23,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
 // Components
-import Calendar from '@/components/Calendar';
+import Agenda from '@/components/Agenda';
 import HorizontalProfessorCard from './components/HorizontalProfessorCard';
 
 // Utils
 import { order_and_group } from '@/utils/order_and_group';
 import { useUser } from '@/context/UserContext';
-import CalendarPagination from '@/components/CalendarPagination';
-import Upload from '@/components/Upload';
+import AgendaPagination from '@/components/AgendaPagination';
 import LoadingModal from '@/components/modals/LoadingModal';
 import useSWR from 'swr';
 import { fetcherGetWithToken } from '@/helpers/FetchHelpers';
@@ -85,6 +84,7 @@ export default function Reservation() {
                 requestOptions
             ).then(res => {
                 res.json().then(json => {
+                    // console.log(json)
                     setDisabledBlocks(
                         json.map(e => {
                             if (e.day[1] < 10) e.day[1] = '0' + e.day[1];
@@ -93,16 +93,17 @@ export default function Reservation() {
                             if (e.startingHour[1] < 10) e.startingHour[1] = '0' + e.startingHour[1];
                             if (e.endingHour[0] < 10) e.endingHour[0] = '0' + e.endingHour[0];
                             if (e.endingHour[1] < 10) e.endingHour[1] = '0' + e.endingHour[1];
-
+                            // console.log(e)
                             return e;
                         })
                     );
                 });
             });
+            // console.log(disabledBlocks)
         } else {
             router.push('/');
         }
-    }, [user, router]);
+    }, [user, router, disabledBlocks]);
 
     const handleCancel = () => {
         setSelectedBlocks([]);
@@ -112,12 +113,20 @@ export default function Reservation() {
     const handleReserve = () => {
         orderedSelectedBlocks.forEach(block => {
             let date = new Date(curr.setDate(first + dayNumber[block.day] + 7 * week)).toLocaleString().split(',')[0];
+            // console.log(date)
             let dateElements = date.split('/');
+            if (dateElements[0].length === 1) dateElements[0] = '0' + dateElements[0];
+            if (dateElements[1].length === 1) dateElements[1] = '0' + dateElements[1];
+            // console.log(dateElements)
+            // let bubble = dateElements[0];
+            // dateElements[2] = dateElements[1];
+            // dateElements[0] = dateElements[2];
+            // dateElements[1] = bubble;
             let bubble = dateElements[0];
             dateElements[0] = dateElements[2];
-            dateElements[2] = dateElements[1];
-            dateElements[1] = bubble;
+            dateElements[2] = bubble;
             date = dateElements.join('-');
+            // console.log(date)
 
             const reservation = {
                 day: date,
@@ -129,6 +138,7 @@ export default function Reservation() {
                 studentId: parseInt(user.id),
                 price: 250 * block.totalHours,
             };
+            // console.log(reservation)
             setIsProcessingReservation(true);
             fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/reservation/create`, {
                 method: 'POST',
@@ -244,13 +254,13 @@ export default function Reservation() {
                         </tbody>
                     </table>
 
-                    {windowSize.width > 500 && <CalendarPagination week={week} setWeek={setWeek} setSelectedBlocks={setSelectedBlocks} />}
+                    {windowSize.width > 500 && <AgendaPagination week={week} setWeek={setWeek} setSelectedBlocks={setSelectedBlocks} />}
                 </div>
                 {windowSize.width <= 500 && (
-                    <CalendarPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={setSelectedBlocks} />
+                    <AgendaPagination week={week} setWeek={setWeek} day={day} setDay={setDay} setSelectedBlocks={setSelectedBlocks} />
                 )}
 
-                <Calendar
+                <Agenda
                     selectedBlocks={selectedBlocks}
                     setSelectedBlocks={setSelectedBlocks}
                     disabledBlocks={disabledBlocks}
@@ -260,7 +270,7 @@ export default function Reservation() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'right', margin: '1rem auto', width: '90%' }}>
-                <Button onClick={handleCancel}>Cancel</Button>
+                <Button onClick={handleCancel} disabled={selectedBlocks.length === 0}>Clear</Button>
                 <Button variant='contained' onClick={handleConfirmationOpen} disabled={selectedBlocks.length === 0}>
                     Reserve
                 </Button>
@@ -284,12 +294,12 @@ export default function Reservation() {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCancel}>Cancel</Button>
+                    <Button onClick={() => setShowConfirmationReservation(false)}>Cancel</Button>
                     <Button variant='contained' onClick={handleReserve}>
                         Reserve
                     </Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog >
 
             <LoadingModal isOpen={isProcessingReservation} message={'Processing reservation, please wait...'} />
 

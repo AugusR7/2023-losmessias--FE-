@@ -58,24 +58,26 @@ export default function AllProfessors() {
 
     useEffect(() => {
         setIsLoading(true);
-        if (router.isReady && user.id) {
-            if (user.role == 'professor') router.push('/professor-landing');
-            if (user.role === 'student') router.push('/student-landing');
-            const requestOptions = {
-                method: 'GET',
-                headers: { Authorization: `Bearer ${user.token}` },
-            };
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/professor/all`, requestOptions)
-                .then(res =>
-                    res.json().then(json => {
-                        setAllProfessors(json);
-                        setProfessors(json);
-                    })
-                )
-                .finally(() => setIsLoading(false));
-        } else {
-            router.push('/');
-        }
+        if (router.isReady)
+            if (user.id) {
+                if (user.role == 'professor') router.push('/professor-landing');
+                if (user.role === 'student') router.push('/student-landing');
+                const requestOptions = {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${user.token}` },
+                };
+                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/professor/all`, requestOptions)
+                    .then(res =>
+                        res.json().then(json => {
+                            setAllProfessors(json);
+                            setProfessors(json);
+                        })
+                    )
+                    .finally(() => setIsLoading(false));
+            } else {
+                router.push('/');
+            }
+
     }, [user, router]);
 
     const applySearchFilter = (searchValue, filterValues) => {

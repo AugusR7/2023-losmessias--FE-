@@ -1,304 +1,664 @@
-// Mui
-import { Typography } from '@mui/material';
+import { useUser } from "@/context/UserContext";
+import useWindowSize from "@/hooks/useWindowSize";
+import { Alert, Box, Button, CircularProgress, Grid, Snackbar, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
+import EventCreationDialog from "./modals/EventCreationDialog";
+import CloseIcon from '@mui/icons-material/Close';
+import EventDeletionDialog from "./modals/EventDeletionDialog";
 
-// Utils
-import { compare_time, first_block, parseDate } from '@/utils/compareDate';
-import { useUser } from '@/context/UserContext';
-import { useRouter } from 'next/router';
-import useWindowSize from '@/hooks/useWindowSize';
 
-const blocks = [
-    '09:00 - 09:30',
-    '09:30 - 10:00',
-    '10:00 - 10:30',
-    '10:30 - 11:00',
-    '11:00 - 11:30',
-    '11:30 - 12:00',
-    '12:00 - 12:30',
-    '12:30 - 13:00',
-    '13:00 - 13:30',
-    '13:30 - 14:00',
-    '14:00 - 14:30',
-    '14:30 - 15:00',
-    '15:00 - 15:30',
-    '15:30 - 16:00',
-    '16:00 - 16:30',
-    '16:30 - 17:00',
-    '17:00 - 17:30',
-    '17:30 - 18:00',
-    '18:00 - 18:30',
-    '18:30 - 19:00',
-    '19:00 - 19:30',
-    '19:30 - 20:00',
-    '20:00 - 20:30',
-    '20:30 - 21:00',
-    '21:00 - 21:30',
-    '21:30 - 22:00',
-];
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const daysNumber = {
-    Monday: 1,
-    Tuesday: 2,
-    Wednesday: 3,
-    Thursday: 4,
-    Friday: 5,
-    Saturday: 6,
-    Sunday: 7,
-};
+export default function Calendar({ events, handleHomeworkClick, setEvents }) {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-const styles = {
-    block: {
-        borderBlock: '1px solid #f0f0f0',
-        cursor: 'pointer',
-    },
-    selected: {
-        borderBlock: '1px solid #338aed70',
-        backgroundColor: '#338aed90',
-        cursor: 'pointer',
-    },
-    disabled: {
-        borderBlock: '1px solid #adadad70',
-        backgroundColor: '#adadad90',
-    },
-    reserved: {
-        borderBlock: '1px solid #e64b4b70',
-        backgroundColor: '#e64b4b90',
-    },
-};
+    const verifyTodaysDate = (day, month, year) => {
+        const today = new Date();
+        return parseInt(day) === today.getDate() && parseInt(month) === today.getMonth() + 1 && parseInt(year) === today.getFullYear();
+    }
 
-export default function Calendar({ selectedBlocks, setSelectedBlocks, disabledBlocks, week, day, interactive = true, showData = false }) {
-    var curr_date = new Date();
-    var first = curr_date.getDate() - curr_date.getDay();
-    const user = useUser();
-    const router = useRouter();
-    const windowSize = useWindowSize();
+    const verifyTodaysMonth = (month, year) => {
+        const today = new Date();
+        return parseInt(month) === today.getMonth() + 1 && parseInt(year) === today.getFullYear();
+    }
 
-    let test = new Date().toLocaleString();
-    console.log(test);
-
-    const handleBlockSelection = (block, day) => {
-        if (!block_disabled(block, day)) {
-            if (selectedBlocks.find(element => element.time === block && element.day === day) !== undefined) {
-                setSelectedBlocks(prevBlocks =>
-                    prevBlocks.filter(element => {
-                        if (element.time === block && element.day === day) return false;
-                        return true;
-                    })
-                );
-            } else {
-                setSelectedBlocks(prevBlocks => [...prevBlocks, { day, time: block }]);
-            }
-        } else {
-            let { id, otherUserId } = redirect_to_reservation(showData, block, day);
-
-            if (id !== undefined) router.push('reservation?id=' + id + '&userId=' + otherUserId);
-        }
-    };
-
-    const active = (block, day) => {
-        let exists = selectedBlocks.find(element => element.time === block && element.day === day);
-        return exists !== undefined;
-    };
-
-    const block_disabled = (block, day) => {
-        if (day_disabled(day, block) || block_reserved(block, day) || block_not_available(block, day)) return true;
-        return false;
-    };
-
-    const block_reserved = (block, day) => {
-        let blockDate = new Date(new Date().setDate(first + daysNumber[day] + 7 * week)).toLocaleString().split(',')[0];
-        blockDate = blockDate.split('/');
-        let bubble = blockDate[0];
-        blockDate[0] = blockDate[2];
-        blockDate[2] = blockDate[1];
-        blockDate[1] = bubble;
-        blockDate = blockDate.join('-');
-        const blockDisabled = disabledBlocks.find(
-            blk => blockDate === blk.day.join('-') && blk.status === 'CONFIRMED' && compare_time(block, blk)
-        );
-
-        if (blockDisabled) return true;
-        return false;
-    };
-
-    const block_not_available = (block, day) => {
-        let blockDate = new Date(new Date().setDate(first + daysNumber[day] + 7 * week)).toLocaleString().split(',')[0];
-        blockDate = blockDate.split('/');
-        let bubble = blockDate[0];
-        blockDate[0] = blockDate[2];
-        blockDate[2] = blockDate[1];
-        blockDate[1] = bubble;
-        blockDate = blockDate.join('-');
-        const blockDisabled = disabledBlocks.find(
-            blk => blockDate === blk.day.join('-') && blk.status === 'NOT_AVAILABLE' && compare_time(block, blk)
-        );
-
-        if (blockDisabled) return true;
-        return false;
-    };
-
-    const show_data = (flag, block, day) => {
-        if (flag) {
-            let blockDate = new Date(new Date().setDate(first + daysNumber[day] + 7 * week)).toLocaleString().split(',')[0];
-            blockDate = blockDate.split('/');
-            let bubble = blockDate[0];
-            blockDate[0] = blockDate[2];
-            blockDate[2] = blockDate[1];
-            blockDate[1] = bubble;
-            blockDate = blockDate.join('-');
-            const blockDisabled = disabledBlocks.findIndex(
-                blk => blockDate === blk.day.join('-') && blk.status === 'CONFIRMED' && first_block(block, blk)
-            );
-            if (blockDisabled !== -1) {
-                let name =
-                    user.role === 'student'
-                        ? disabledBlocks[blockDisabled].professor.firstName + ' ' + disabledBlocks[blockDisabled].professor.lastName
-                        : disabledBlocks[blockDisabled].student.firstName + ' ' + disabledBlocks[blockDisabled].student.lastName;
-
-                return {
-                    id: disabledBlocks[blockDisabled].id,
-                    subject: disabledBlocks[blockDisabled].subject.name,
-                    name,
-                };
-            }
-        }
-    };
-
-    const redirect_to_reservation = (flag, block, day) => {
-        if (flag) {
-            let blockDate = new Date(new Date().setDate(first + daysNumber[day] + 7 * week)).toLocaleString().split(',')[0];
-            blockDate = blockDate.split('/');
-            let bubble = blockDate[0];
-            blockDate[0] = blockDate[2];
-            blockDate[2] = blockDate[1];
-            blockDate[1] = bubble;
-            blockDate = blockDate.join('-');
-            const blockDisabled = disabledBlocks.findIndex(
-                blk => blockDate === blk.day.join('-') && blk.status === 'CONFIRMED' && compare_time(block, blk)
-            );
-            if (blockDisabled !== -1) {
-                return {
-                    id: disabledBlocks[blockDisabled].id,
-                    otherUserId:
-                        user.role.toLowerCase() === 'student'
-                            ? disabledBlocks[blockDisabled].professor.id
-                            : disabledBlocks[blockDisabled].student.id,
-                };
-            }
-        }
-    };
-
-    const day_disabled = (day, block) => {
-        if (week === 0 && curr_date.getDay() > daysNumber[day]) {
-            return true;
-        } else if (
-            week === 0 &&
-            curr_date.getDay() === daysNumber[day] &&
-            curr_date.getHours() > parseInt(block.split('-')[0].split(':')[0])
+    const WeekdayContainer = ({ children, style }) => {
+        return (
+            <Grid item xs={12 / 7} sx={{
+                border: '1px solid #e0e0e0',
+                padding: 1,
+                textAlign: 'center',
+                ...style
+            }}>
+                {children}
+            </Grid>
         )
-            return true;
+    }
 
-        return false;
-    };
+    const WeekDays = () => {
+        return (
+            <Grid container>
+                {days.map((day, index) => (
+                    <WeekdayContainer key={index}>
+                        <Typography variant='h6'>{day}</Typography>
+                    </WeekdayContainer>
+                ))}
+            </Grid>
+        )
+    }
 
-    const style_of_block = (block, day) => {
-        let style = interactive ? styles.block : { ...styles.block, cursor: 'default' };
+    const user = useUser();
+    const windowSize = useWindowSize();
+    const numDays = (y, m) => new Date(y, m, 0).getDate();
+    const [year, setYear] = useState(new Date().toISOString().split('T')[0].split('-')[0]);
+    const [month, setMonth] = useState(new Date().toISOString().split('T')[0].split('-')[1]);
+    const [day, setDay] = useState(new Date().toISOString().split('T')[0].split('-')[2]);
+    const numberOfDaysInMonth = numDays(year, month);
+    const numberOfDaysInPreviousMonth = numDays(year, month - 1);
+    const firstDayOfTheWeek = new Date(year, month - 1).getDay();
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    const lastDaysOfPreviousMonth = Array.from({ length: firstDayOfTheWeek }, (_, i) => i + 1).map(day => day - 1).reverse();
+    const lastDayOfTheMonth = new Date(year, month, 0).getDay();
+    const [alert, setAlert] = useState(false);
+    const [alertSeverity, setAlertSeverity] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
+    const [deleteDialog, setDeleteDialog] = useState(false);
+    const [eventToDelete, setEventToDelete] = useState();
 
-        if (active(block, day)) style = styles.selected;
-        else if (day_disabled(day, block)) style = styles.disabled;
-        else if (block_reserved(block, day)) style = showData ? { ...styles.reserved, cursor: 'pointer' } : styles.reserved;
-        else if (block_not_available(block, day)) style = styles.disabled;
+    const [openCreationDialog, setOpenCreationDialog] = useState(false);
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+    const [startTime, setStartTime] = useState(new Date().toISOString().split('T')[1].split(':').slice(0, 2).join(':'));
+    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+    const [endTime, setEndTime] = useState(new Date().toISOString().split('T')[1].split(':').slice(0, 2).join(':'));
+    const [eventType, setEventType] = useState('EXAM');
 
-        return style;
-    };
+    const [isTodayDate, setIsTodayDate] = useState(true)
+
+    useEffect(() => {
+        setIsTodayDate(verifyTodaysDate(day, month, year))
+    }, [day, month, year])
+
+    const verifyInclusion = (initialDate, finalDate, date) => {
+        const initial = new Date(initialDate[0], initialDate[1], initialDate[2]);
+        const final = new Date(finalDate[0], finalDate[1], finalDate[2]);
+        const current = new Date(date[0], date[1], date[2]);
+        return current >= initial && current <= final;
+    }
+
+    const goToTodaysDate = () => {
+        const today = new Date();
+        setYear(today.getFullYear());
+        setMonth(today.getMonth() + 1);
+        setDay(today.getDate());
+    }
+
+    const goToTodaysMonth = () => {
+        const today = new Date();
+        setYear(today.getFullYear());
+        setMonth(today.getMonth() + 1);
+    }
+
+    const handleDateChange = (event, endingDate = false) => {
+        if (event.target.value < new Date().toISOString().slice(0, 10)) {
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please select a date  begining from today (or in the future)")
+        } else if (endingDate && event.target.value < startDate) {
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please select a date greater than the starting date")
+        } else if (!endingDate && event.target.value > endDate) {
+            setEndDate(event.target.value);
+            setStartDate(event.target.value);
+        } else {
+            setAlert(false)
+            if (endingDate)
+                setEndDate(event.target.value);
+            else
+                setStartDate(event.target.value);
+        }
+    }
+
+    const handleTimeChange = (event, endingTime = false) => {
+        if (event.target.value < new Date().toISOString().slice(11, 16) && startDate < new Date().toISOString().split('T')[0]) {
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please select a time greater than the current time")
+        } else if (endingTime && startDate === endDate && event.target.value < startTime) {
+            // if it is the ending time, and the starting date is the same as the ending date, then the ending time must be greater than the starting time
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please select a time greater than the starting time")
+        } else if (!endingTime && startDate === endDate && event.target.value > endTime) {
+            // if it is the starting time, and the starting date is the same as the ending date, then the ending time must be the same as the new starting time
+            setStartTime(event.target.value)
+            setEndTime(event.target.value)
+        } else {
+            setAlert(false)
+            if (endingTime)
+                setEndTime(event.target.value);
+            else
+                setStartTime(event.target.value);
+        }
+    }
+
+    const handleCreateEvent = () => {
+        if (title === '' || description === '') {
+            setAlert(true)
+            setAlertSeverity('error')
+            setAlertMessage("Please fill in all the fields")
+        }
+        else {
+            var data = new FormData();
+            data.append('title', title)
+            data.append('description', description)
+            data.append('startTime', startDate + 'T' + startTime)
+            data.append('endTime', endDate + 'T' + endTime)
+            data.append('type', eventType)
+            data.append('userId', user.id)
+            setEvents(prevEvents => [...prevEvents, {
+                id: events.length + 1,
+                title: title,
+                description: description,
+                startDate: [parseInt(startDate.split('-')[0]), parseInt(startDate.split('-')[1]), parseInt(startDate.split('-')[2]), parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1])],
+                endDate: [parseInt(endDate.split('-')[0]), parseInt(endDate.split('-')[1]), parseInt(endDate.split('-')[2]), parseInt(endTime.split(':')[0]), parseInt(endTime.split(':')[1])],
+                type: eventType,
+                isLoading: true
+            }])
+
+            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/create`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${user.token}`,
+                },
+                body: data
+            })
+                .then(res => {
+                    if (res.status === 201) {
+                        setAlertMessage('Event created successfully!');
+                        setAlertSeverity('success');
+                        res.json().then(data => {
+                            setEvents(prevEvents => prevEvents.filter(event => !event.isLoading));
+                            setEvents(prevEvents => [...prevEvents, {
+                                id: data.id,
+                                title: data.title,
+                                description: data.description,
+                                startDate: data.startDate,
+                                endDate: data.endDate,
+                                type: data.type
+                            }])
+                        })
+                    } else if (res.status === 400) {
+                        setAlert(true);
+                        setAlertMessage('An error occurred while creating the event. Please try again later');
+                        setAlertSeverity('error');
+                    }
+                })
+                .catch(err => {
+                    setAlert(true);
+                    setAlertMessage('An error occurred while creating the event');
+                    setAlertSeverity('error');
+                    console.log(err)
+                })
+                .finally(() => {
+                    setEvents(prevEvents => prevEvents.filter(event => !event.isLoading));
+                })
+            handleClose();
+        }
+    }
+
+    const handleDeleteEvent = (id) => {
+        fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/events/delete/${id}`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${user.token}`
+            }
+        })
+            .then(res => {
+                if (res.status === 200) {
+                    setAlert(true);
+                    setAlertMessage('Event deleted successfully!');
+                    setAlertSeverity('success');
+                    setEvents(prevEvents => prevEvents.filter(event => event.id !== id));
+                } else {
+                    setAlertMessage('An error occurred while deleting the event');
+                    setAlertSeverity('error');
+                }
+            })
+            .catch(err => {
+                setAlertMessage('An error occurred while deleting the event');
+                setAlertSeverity('error');
+                console.log(err)
+            }).finally(() => {
+                setDeleteDialog(false);
+            })
+    }
+
+    const handleCloseDialog = () => {
+        setDeleteDialog(false);
+    }
+
+    //this only manages month and year, not day
+    const handlePagination = (direction) => {
+        const isRightDirection = direction === 'right';
+        const isMonthEnd = month === 12;
+        const isMonthStart = month === 1;
+        const newYear = isRightDirection ? parseInt(year) + 1 : parseInt(year) - 1;
+        const newMonth = isRightDirection ? 1 : 12;
+
+        if (isRightDirection && isMonthEnd) {
+            setYear(newYear);
+            setMonth(newMonth);
+        } else if (!isRightDirection && isMonthStart) {
+            setYear(newYear);
+            setMonth(newMonth);
+        } else {
+            setMonth(parseInt(month) + (isRightDirection ? 1 : -1));
+        }
+    }
+
+    const handlePaginationMobile = (direction) => {
+        const isRightDirection = direction === 'right';
+        const isMonthEnd = day === numDays(year, month);
+        const isMonthStart = day === 1;
+        const isYearEnd = month === 12;
+        const isYearStart = month === 1;
+
+        const newYear = isRightDirection ? parseInt(year) + 1 : parseInt(year) - 1;
+        const newMonth = isRightDirection ? 1 : 12;
+        const newMonthDay = isRightDirection ? 1 : numDays(year, month - 1);
+
+        if (isRightDirection && isMonthEnd) {
+            setYear(isYearEnd ? newYear : year);
+            setMonth(isYearEnd ? newMonth : parseInt(month) + 1);
+            setDay(newMonthDay);
+        } else if (!isRightDirection && isMonthStart) {
+            setYear(isYearStart ? newYear : year);
+            setMonth(isYearStart ? newMonth : parseInt(month) - 1);
+            setDay(newMonthDay);
+        } else {
+            setDay(parseInt(day) + (isRightDirection ? 1 : -1));
+        }
+    }
+
+    const handleClose = () => {
+        setOpenCreationDialog(false);
+        setStartDate(new Date().toISOString().split('T')[0]);
+        setStartTime(new Date().toISOString().split('T')[1].split(':').slice(0, 2).join(':'));
+        setEndDate(new Date().toISOString().split('T')[0]);
+        setEndTime(new Date().toISOString().split('T')[1].split(':').slice(0, 2).join(':'));
+        setTitle('');
+        setDescription('');
+        setEventType('EXAM');
+    }
 
     return (
-        <>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', marginBlock: 10, alignItems: 'center' }}>
+            <Snackbar open={alert} autoHideDuration={6000} onClose={() => setAlert(false)}>
+                <Alert onClose={() => setAlert(false)} severity={alertSeverity} sx={{ width: '100%' }}>
+                    {alertMessage}
+                </Alert>
+            </Snackbar>
+
             {windowSize.width > 500 && (
-                <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-                    <thead style={{ height: '3rem', backgroundColor: '#fafafa' }}>
-                        <tr>
-                            <th style={{ borderBottom: '1px solid #f0f0f0', width: '10%' }}></th>
-                            {days.map(day => (
-                                <th style={{ borderBottom: '1px solid #f0f0f0' }} key={day}>
-                                    <Typography variant='h6'>{day}</Typography>
-                                    <Typography>{parseDate(new Date(new Date().setDate(first + daysNumber[day] + 7 * week)))}</Typography>
-                                </th>
+                <>
+                    <Grid container >
+                        <EventCreationDialog
+                            openCreationDialog={openCreationDialog}
+                            handleClose={handleClose}
+                            title={title}
+                            setTitle={setTitle}
+                            description={description}
+                            setDescription={setDescription}
+                            startDate={startDate}
+                            startTime={startTime}
+                            endDate={endDate}
+                            endTime={endTime}
+                            eventType={eventType}
+                            setEventType={setEventType}
+                            handleCreateEvent={handleCreateEvent}
+                            handleDateChange={handleDateChange}
+                            handleTimeChange={handleTimeChange}
+                        />
+                        <EventDeletionDialog
+                            open={deleteDialog}
+                            eventId={eventToDelete}
+                            handleClose={handleCloseDialog}
+                            handleDelete={handleDeleteEvent}
+                        />
+                        <Grid item xs={12} sx={{
+                            border: '1px solid #e0e0e0',
+                            borderTopLeftRadius: 10,
+                            borderTopRightRadius: 10,
+                            padding: 1,
+                            textAlign: 'center',
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between'
+                        }}>
+                            <Button variant='outlined' disabled={month === 1 && year === 2024} onClick={() => handlePagination('left')} >
+                                {'<'}
+                            </Button>
+                            <Typography variant='h6' sx={{ textAlign: 'center' }}>
+                                {months[month - 1]} {year}
+                            </Typography>
+                            <Button variant='outlined' onClick={() => handlePagination('right')}>
+                                {'>'}
+                            </Button>
+                        </Grid>
+                        <Grid container>
+                            <WeekDays />
+                            {lastDaysOfPreviousMonth.map((day, index) => (
+                                <WeekdayContainer key={index}>
+                                    <Typography sx={{ color: 'gray' }} >{numberOfDaysInPreviousMonth - day}</Typography>
+                                </WeekdayContainer>
                             ))}
-                        </tr>
-                    </thead>
-
-                    <tbody style={{ backgroundColor: '#fff' }}>
-                        {blocks.map(block => (
-                            <tr key={block} style={{ height: '2.3rem' }}>
-                                <td style={{ borderBlock: '1px solid #f0f0f0', textAlign: 'center' }}>
-                                    <Typography variant='body1'>{block}</Typography>
-                                </td>
-
-                                {days.map(day => {
-                                    const data = show_data(showData, block, day);
-
-                                    return (
-                                        <td style={style_of_block(block, day)} onClick={() => handleBlockSelection(block, day)} key={day}>
-                                            <Typography fontSize={14} align='center'>
-                                                {data?.subject}
-                                            </Typography>
-                                            <Typography fontSize={14} align='center'>
-                                                {data?.name}
-                                            </Typography>
-                                        </td>
-                                    );
-                                })}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            )}
+                            {Array.from({ length: numberOfDaysInMonth }, (_, i) => i + 1).map((day, index) => {
+                                const event_on_this_day = events.find(event => verifyInclusion(event.startDate, event.endDate, [year, month, day]))
+                                const radius = index === numberOfDaysInMonth - 1 ? 10 : 0;
+                                return (
+                                    <WeekdayContainer key={index} style={{
+                                        borderBottomLeftRadius: radius,
+                                        backgroundColor: verifyTodaysDate(day, month, year) ? 'lightblue' : 'white'
+                                    }}>
+                                        <Typography fontWeight={verifyTodaysDate(day, month, year) ? 'bold' : 'normal'}>{day}</Typography>
+                                        {events.map((event, index) => {
+                                            const calendarDay = day < 10 ? `0${day}` : day;
+                                            const color = event.type === 'EXAM' ? '#f28f6a' : event.type === "PROJECT_PRESENTATION" ? "#0a9dff" : "#fff952";
+                                            if (event.type !== 'HOMEWORK' && !event.isLoading) {
+                                                verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])
+                                                if (verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
+                                                    const startHour = event.startDate[3] < 10 ? `0${event.startDate[3]}` : event.startDate[3];
+                                                    const startMinute = event.startDate[4] < 10 ? `0${event.startDate[4]}` : event.startDate[4];
+                                                    const endHour = event.endDate[3] < 10 ? `0${event.endDate[3]}` : event.endDate[3];
+                                                    const endMinute = event.endDate[4] < 10 ? `0${event.endDate[4]}` : event.endDate[4];
+                                                    const startTime = startHour + ':' + startMinute;
+                                                    const endTime = endHour + ':' + endMinute;
+                                                    const cursor = event.type === 'HOMEWORK' ? 'pointer' : 'auto'
+                                                    return (
+                                                        <div key={index} style={{ backgroundColor: color, padding: 5, borderRadius: 5, marginBlock: 5, cursor: cursor }}>
+                                                            <Box sx={{ position: 'relative' }}>
+                                                                <Typography variant='caption' fontWeight='bold'>{event.title}</Typography>
+                                                                <Button
+                                                                    variant='contained'
+                                                                    onClick={() => {
+                                                                        setEventToDelete(event.id);
+                                                                        setDeleteDialog(true);
+                                                                    }}
+                                                                    sx={{
+                                                                        marginLeft: 1,
+                                                                        padding: 0,
+                                                                        minWidth: 0,
+                                                                        minHeight: 0,
+                                                                        borderRadius: 0,
+                                                                        borderRadius: 15,
+                                                                        backgroundColor: 'red',
+                                                                        position: 'absolute',
+                                                                        top: 0,
+                                                                        right: 0,
+                                                                        ":hover": {
+                                                                            backgroundColor: '#a40000',
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <CloseIcon fontSize='small' />
+                                                                </Button>
+                                                                <br />
+                                                            </Box>
+                                                            <Typography variant='caption'>{event.description}</Typography><br />
+                                                            {event.type !== "VACATION" ?
+                                                                <Typography variant='caption' fontStyle='italic'>{startTime} - {endTime} </Typography>
+                                                                :
+                                                                <Typography variant='caption' fontStyle='italic'>All day</Typography>
+                                                            }
+                                                        </div>
+                                                    )
+                                                }
+                                            }
+                                            if (event.type === 'HOMEWORK' && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay]) && !event.isLoading) {
+                                                const color = event.status === 'PENDING' ? '#ffd86f' : event.status === 'DONE' ? "#42ae80" : "#ff0000";
+                                                return (
+                                                    <div key={index} style={{ backgroundColor: color, padding: 5, borderRadius: 5, marginBlock: 5, cursor: 'pointer' }} onClick={() => handleHomeworkClick(event)}>
+                                                        <Typography variant='caption' fontWeight='bold'>{event.description ? event.description : "Homework assignment given by file uploaded"}</Typography><br />
+                                                        <Typography variant='caption' fontStyle='italic'>{event.endDate[3] + ':' + event.endDate[4]} -</Typography>
+                                                        <Typography variant='caption' fontStyle='italic' fontWeight='bold'> {event.status}</Typography>
+                                                    </div>
+                                                )
+                                            }
+                                            if (event.isLoading && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
+                                                return (
+                                                    <div key={index} style={{ backgroundColor: '#191919', padding: 5, borderRadius: 5, marginBlock: 5 }}>
+                                                        <Box sx={{ alignContent: 'center', flexDirection: 'row', display: 'flex', justifyContent: 'center' }}>
+                                                            <CircularProgress size={15} sx={{ mr: 1, color: 'white' }} />
+                                                            <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>Creating event...</Typography>
+                                                        </Box>
+                                                        <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>{event.title} </Typography><br />
+                                                        <Typography variant='caption' color='white' fontStyle='italic'>{event.description}</Typography> <br />
+                                                        <Typography variant='caption' color='white' fontStyle='italic'>{event.startDate[3] + ':' + event.startDate[4]} - {event.endDate[3] + ':' + event.endDate[4]}</Typography>
+                                                    </div>
+                                                );
+                                            }
+                                        })}
+                                        {(!event_on_this_day) &&
+                                            <div style={{ backgroundColor: 'gray', padding: 5, borderRadius: 5, marginBlock: 5 }}>
+                                                <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>No events on this day</Typography>
+                                            </div>
+                                        }
+                                    </WeekdayContainer>
+                                )
+                            })}
+                            {Array.from({ length: 6 - lastDayOfTheMonth }, (_, i) => i + 1).map((day, index) => {
+                                const radius = index === 6 - lastDayOfTheMonth - 1 ? 10 : 0;
+                                return (
+                                    <WeekdayContainer key={index} style={{ borderBottomRightRadius: radius }}>
+                                        <Typography sx={{ color: 'gray' }} >{day}</Typography>
+                                    </WeekdayContainer>
+                                )
+                            })}
+                        </Grid>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                            <Button variant='contained' onClick={() => setOpenCreationDialog(true)} sx={{ marginTop: 3 }}>Create Event</Button>
+                            <Button variant='outlined' onClick={goToTodaysMonth} sx={{ marginTop: 3 }} disabled={verifyTodaysMonth(month, year)}>Go to today</Button>
+                        </div>
+                    </Grid>
+                </>
+            )
+            }
 
             {windowSize.width <= 500 && (
                 <>
-                    <Typography variant='h6' textAlign='center'>
-                        {days[day - 1]}
-                    </Typography>
-                    <Typography textAlign='center'>
-                        {parseDate(new Date(new Date().setDate(first + daysNumber[days[day - 1]] + 7 * week)))}
-                    </Typography>
-                    <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-                        <thead style={{ height: '0.2rem', backgroundColor: '#fafafa' }}>
-                            <tr>
-                                <th style={{ borderBottom: '1px solid #f0f0f0', width: '35%' }}></th>
-                                <th style={{ borderBottom: '1px solid #f0f0f0' }} key={days[day - 1]}></th>
-                            </tr>
-                        </thead>
-
-                        <tbody style={{ backgroundColor: '#fff' }}>
-                            {blocks.map(block => {
-                                const data = show_data(showData, block, days[day - 1]);
-                                return (
-                                    <tr key={block} style={{ height: '2.3rem' }}>
-                                        <td style={{ borderBlock: '1px solid #f0f0f0', textAlign: 'center' }}>
-                                            <Typography variant='body1'>{block}</Typography>
-                                        </td>
-
-                                        <td
-                                            style={style_of_block(block, days[day - 1])}
-                                            onClick={() => handleBlockSelection(block, days[day - 1])}
-                                            key={days[day - 1]}
-                                        >
-                                            <Typography fontSize={14} align='center'>
-                                                {data?.subject}
-                                            </Typography>
-                                            <Typography fontSize={14} align='center'>
-                                                {data?.name}
-                                            </Typography>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                    <Grid container >
+                        <EventCreationDialog
+                            openCreationDialog={openCreationDialog}
+                            handleClose={handleClose}
+                            title={title}
+                            setTitle={setTitle}
+                            description={description}
+                            setDescription={setDescription}
+                            startDate={startDate}
+                            startTime={startTime}
+                            endDate={endDate}
+                            endTime={endTime}
+                            eventType={eventType}
+                            setEventType={setEventType}
+                            handleCreateEvent={handleCreateEvent}
+                            handleDateChange={handleDateChange}
+                            handleTimeChange={handleTimeChange}
+                        />
+                        <EventDeletionDialog
+                            open={deleteDialog}
+                            eventId={eventToDelete}
+                            handleClose={handleCloseDialog}
+                            handleDelete={handleDeleteEvent}
+                        />
+                        <Grid item xs={12} sx={{
+                            border: '1px solid #e0e0e0',
+                            borderTopLeftRadius: 10,
+                            borderTopRightRadius: 10,
+                            padding: 1,
+                            textAlign: 'center',
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between'
+                        }}>
+                            <Button variant='outlined' disabled={day === 1 && month === 1 && year === 2024} onClick={() => handlePaginationMobile('left')}>
+                                {'<'}
+                            </Button>
+                            <Typography variant='h6' sx={{
+                                textAlign: 'center',
+                                backgroundColor: !isTodayDate ? 'none' : 'lightblue',
+                                borderRadius: 2,
+                                padding: 1
+                            }}
+                            >
+                                {new Date(year, month - 1).toLocaleString('en-GB', { month: 'long' })} {day}, {year}
+                            </Typography>
+                            <Button variant='outlined' onClick={() => handlePaginationMobile('right')}>
+                                {'>'}
+                            </Button>
+                        </Grid>
+                        <Grid container>
+                            <Grid item xs={12} sx={{
+                                border: '1px solid #e0e0e0',
+                                padding: 1,
+                                textAlign: 'center',
+                                borderBottomLeftRadius: 10,
+                                borderBottomRightRadius: 10
+                            }}>
+                                <Typography variant='h6'>{days[new Date(year, month - 1, day).getDay()]}</Typography>
+                            </Grid>
+                            {events.map((event, index) => {
+                                const calendarDay = day < 10 ? `0${day}` : day;
+                                const color = event.type === 'EXAM' ? '#f28f6a' : event.type === "PROJECT_PRESENTATION" ? "#0a9dff" : "#fff952";
+                                if (event.type !== 'HOMEWORK' && !event.isLoading) {
+                                    verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])
+                                    if (verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
+                                        const startHour = event.startDate[3] < 10 ? `0${event.startDate[3]}` : event.startDate[3];
+                                        const startMinute = event.startDate[4] < 10 ? `0${event.startDate[4]}` : event.startDate[4];
+                                        const endHour = event.endDate[3] < 10 ? `0${event.endDate[3]}` : event.endDate[3];
+                                        const endMinute = event.endDate[4] < 10 ? `0${event.endDate[4]}` : event.endDate[4];
+                                        const startTime = startHour + ':' + startMinute;
+                                        const endTime = endHour + ':' + endMinute;
+                                        const cursor = event.type === 'HOMEWORK' ? 'pointer' : 'auto'
+                                        return (
+                                            <Grid item
+                                                xs={12}
+                                                key={index}
+                                                sx={{
+                                                    backgroundColor: color,
+                                                    padding: 1,
+                                                    borderRadius: 2,
+                                                    marginBlock: 2,
+                                                    cursor: cursor,
+                                                }}
+                                            >
+                                                <Box sx={{ position: 'relative', textAlign: 'center' }}>
+                                                    <Typography variant='h6' fontWeight='bold'>{event.title}</Typography>
+                                                    <Button
+                                                        variant='contained'
+                                                        onClick={() => {
+                                                            setEventToDelete(event.id);
+                                                            setDeleteDialog(true);
+                                                        }}
+                                                        sx={{
+                                                            marginLeft: 1,
+                                                            padding: 0,
+                                                            minWidth: 0,
+                                                            minHeight: 0,
+                                                            borderRadius: 0,
+                                                            borderRadius: 15,
+                                                            backgroundColor: 'red',
+                                                            position: 'absolute',
+                                                            top: 0,
+                                                            right: 0,
+                                                            ":hover": {
+                                                                backgroundColor: '#a40000',
+                                                            }
+                                                        }}
+                                                    >
+                                                        <CloseIcon fontSize='small' />
+                                                    </Button>
+                                                    <br />
+                                                </Box>
+                                                <Box sx={{ textAlign: 'center' }}>
+                                                    <Typography sx={{ justifyContent: 'center' }}>{event.description}</Typography><br />
+                                                    {event.type !== "VACATION" ?
+                                                        <Typography fontStyle='italic'>{startTime} - {endTime} </Typography>
+                                                        :
+                                                        <Typography fontStyle='italic'>All day</Typography>
+                                                    }
+                                                </Box>
+                                            </Grid>
+                                        )
+                                    }
+                                }
+                                if (event.type === 'HOMEWORK' && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay]) && !event.isLoading) {
+                                    const color = event.status === 'PENDING' ? '#ffd86f' : event.status === 'DONE' ? "#42ae80" : "#ff0000";
+                                    return (
+                                        <Grid item xs={12} key={index} sx={{
+                                            backgroundColor: color,
+                                            padding: 1,
+                                            borderRadius: 2,
+                                            marginBlock: 2,
+                                            cursor: 'pointer',
+                                            textAlign: 'center'
+                                        }} onClick={() => handleHomeworkClick(event)}>
+                                            <Typography fontWeight='bold' sx={{ paddingRight: 2, paddingLeft: 2 }}>{event.description ? event.description : "Homework assignment given by file uploaded"}</Typography><br />
+                                            <Typography fontStyle='italic'>{event.endDate[3] + ':' + event.endDate[4]}</Typography>
+                                            <Typography fontStyle='italic' fontWeight='bold'> {event.status}</Typography>
+                                        </Grid>
+                                    )
+                                }
+                                if (event.isLoading && verifyInclusion(event.startDate, event.endDate, [year, month, calendarDay])) {
+                                    return (
+                                        <Grid item xs={12} key={index} sx={{
+                                            backgroundColor: '#191919',
+                                            paddingTop: 1,
+                                            paddingBottom: 2,
+                                            paddingLeft: 3,
+                                            paddingRight: 3,
+                                            borderRadius: 2,
+                                            marginBlock: 2,
+                                            cursor: 'pointer',
+                                        }}>
+                                            <Box sx={{ alignContent: 'center', flexDirection: 'row', display: 'flex', justifyContent: 'center' }}>
+                                                <CircularProgress size={15} sx={{ mr: 1, color: 'white' }} />
+                                                <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>Creating event...</Typography>
+                                            </Box>
+                                            <Typography variant='caption' color='white' fontWeight='bold' fontStyle='italic'>{event.title} </Typography><br />
+                                            <Typography variant='caption' color='white' fontStyle='italic'>{event.description}</Typography> <br />
+                                            <Typography variant='caption' color='white' fontStyle='italic'>{event.startDate[3] + ':' + event.startDate[4]} - {event.endDate[3] + ':' + event.endDate[4]}</Typography>
+                                        </Grid>
+                                    );
+                                }
+                            }
+                            )}
+                            {!events.find(event => verifyInclusion(event.startDate, event.endDate, [year, month, day])) && (
+                                <Grid item xs={12} sx={{
+                                    backgroundColor: 'gray',
+                                    padding: 1,
+                                    borderRadius: 2,
+                                    marginBlock: 2,
+                                    textAlign: 'center'
+                                }}>
+                                    <Typography color='white' fontWeight='bold' fontStyle='italic'>No events on this day</Typography>
+                                </Grid>
+                            )}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                <Button variant='contained' onClick={() => setOpenCreationDialog(true)} sx={{ marginTop: 3 }}>Create Event</Button>
+                                <Button variant='outlined'
+                                    onClick={goToTodaysDate}
+                                    sx={{ marginTop: 3, justifySelf: 'center' }}
+                                    disabled={isTodayDate}
+                                >
+                                    Go to today
+                                </Button>
+                            </div>
+                        </Grid>
+                    </Grid>
                 </>
-            )}
-        </>
-    );
+            )
+            }
+        </div >
+    )
 }

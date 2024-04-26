@@ -49,25 +49,26 @@ export default function Feedbacks() {
     const router = useRouter();
 
     useEffect(() => {
-        if (user.id) {
-            if (user.role === 'professor') router.push('/professor-landing');
-            if (user.role === 'student') router.push('/student-landing');
-            const requestOptions = {
-                method: 'GET',
-                headers: { Authorization: `Bearer ${user.token}` },
-            };
-            setIsLoading(true);
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/feedback/getAllFeedbacks`, requestOptions)
-                .then(res =>
-                    res.json().then(json => {
-                        setAllFeedbacks(json);
-                        setFeedbacks(json);
-                    })
-                )
-                .finally(() => setIsLoading(false));
-        } else {
-            router.push('/');
-        }
+        if (router.isReady)
+            if (user.id) {
+                if (user.role === 'professor') router.push('/professor-landing');
+                if (user.role === 'student') router.push('/student-landing');
+                const requestOptions = {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${user.token}` },
+                };
+                setIsLoading(true);
+                fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/feedback/getAllFeedbacks`, requestOptions)
+                    .then(res =>
+                        res.json().then(json => {
+                            setAllFeedbacks(json);
+                            setFeedbacks(json);
+                        })
+                    )
+                    .finally(() => setIsLoading(false));
+            } else {
+                router.push('/');
+            }
     }, [user, router]);
 
     const handleSearch = e => {

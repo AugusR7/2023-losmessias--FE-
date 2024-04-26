@@ -1,7 +1,6 @@
 import { useUser } from '@/context/UserContext';
 import {
     Alert,
-    Box,
     Button,
     Dialog,
     DialogActions,
@@ -12,7 +11,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import { ChangeEvent, useState } from 'react';
+import { useState } from 'react';
 import { styled } from '@mui/material/styles';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import useWindowSize from '@/hooks/useWindowSize';
@@ -45,18 +44,16 @@ export default function Upload({ id, setFiles, setComments, setUploadingFileName
         }
     };
 
-    const onFileChange = event => {
-        const myFile = event.target.files[0];
-        setFile(myFile);
-    };
-
     const handleSave = () => {
-        var response;
         if (file !== null) {
             var data = new FormData();
             setUploadingFileNames(prevNames => [...prevNames, file.name]);
             data.append('file', file);
-            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/file/uploadFile`, {
+            data.append('role', user.role);
+            data.append('classReservation', id);
+            data.append('associatedId', user.id);
+            data.append('homeworkId', -1);
+            fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/file/upload`, {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${user.token}`,
@@ -73,22 +70,6 @@ export default function Upload({ id, setFiles, setComments, setUploadingFileName
                         setAlertSeverity('error');
                         setAlertMessage('There was an error uploading the file!');
                     }
-                })
-                .then(json => {
-                    fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/file/setUploadInformation`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${user.token}`,
-                        },
-                        body: JSON.stringify({
-                            idFile: json.fileId,
-                            classReservation: parseInt(id),
-                            role: user.role.toUpperCase(),
-                            uploadedDateTime: new Date().toISOString().split('.')[0],
-                            associatedId: user.id,
-                        }),
-                    });
                 })
                 .catch(err => {
                     setAlertSeverity('error');

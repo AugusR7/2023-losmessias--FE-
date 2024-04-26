@@ -418,7 +418,7 @@ export default function ProfessorLandingPage() {
                             />
 
                             <div style={{ display: 'flex', justifyContent: 'right', margin: '1rem auto', width: '90%' }}>
-                                <Button onClick={handleCancel}>Cancel</Button>
+                                <Button onClick={handleCancel} disabled={selectedBlocks.length === 0}>Cancel</Button>
                                 <Button variant='contained' onClick={handleConfirmationOpen} disabled={selectedBlocks.length === 0}>
                                     Disable
                                 </Button>

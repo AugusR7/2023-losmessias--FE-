@@ -526,6 +526,11 @@ export default function Reservation() {
                                                                         due {formatDate(homework.deadline)}
                                                                     </Typography>
                                                                 }
+                                                                {homework.status === "LATE" &&
+                                                                    <Typography sx={{ color: "orange", marginLeft: "0.5rem" }}>
+                                                                        overdue {formatDate(homework.deadline)}
+                                                                    </Typography>
+                                                                }
                                                             </div>
                                                             <Grid container>
                                                                 <Grid item xs={3} sx={{ display: "flex", flexDirection: "row", alignItems: 'center' }}>

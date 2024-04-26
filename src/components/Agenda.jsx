@@ -127,8 +127,9 @@ export default function Agenda({ selectedBlocks, setSelectedBlocks, disabledBloc
         blockDate = blockDate.split('/');
         let bubble = blockDate[0];
         blockDate[0] = blockDate[2];
-        blockDate[2] = blockDate[1];
-        blockDate[1] = bubble;
+        blockDate[2] = bubble;
+        if (blockDate[1].length === 1) blockDate[1] = '0' + blockDate[1];
+        if (blockDate[2].length === 1) blockDate[2] = '0' + blockDate[2];
         blockDate = blockDate.join('-');
         const blockDisabled = disabledBlocks.find(
             blk => blockDate === blk.day.join('-') && blk.status === 'NOT_AVAILABLE' && compare_time(block, blk)

@@ -156,8 +156,9 @@ export default function ProfessorLandingPage() {
             let dateElements = date.split('/');
             let bubble = dateElements[0];
             dateElements[0] = dateElements[2];
-            dateElements[2] = dateElements[1];
-            dateElements[1] = bubble;
+            dateElements[2] = bubble;
+            if (dateElements[1] < 10) dateElements[1] = '0' + dateElements[1];
+            if (dateElements[2] < 10) dateElements[2] = '0' + dateElements[2];
             date = dateElements.join('-');
 
             const reservation = {
